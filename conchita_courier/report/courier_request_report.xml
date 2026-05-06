@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         ACCIÓN DE REPORTE — Solicitud de Envío
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_report_courier_request" model="ir.actions.report">
+        <field name="name">Comprobante de Envío</field>
+        <field name="model">courier.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">conchita_courier.report_courier_request_document</field>
+        <field name="report_file">conchita_courier.report_courier_request_document</field>
+        <field name="print_report_name">'Envio-' + (object.name or '')</field>
+        <field name="binding_model_id" ref="model_courier_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         PLANTILLA PRINCIPAL DEL REPORTE
+    ══════════════════════════════════════════════════════ -->
+    <template id="report_courier_request_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+
+                        <!-- ── ENCABEZADO ── -->
+                        <div class="row mb-4">
+                            <div class="col-8">
+                                <h2 class="text-primary mb-1">COMPROBANTE DE ENVÍO</h2>
+                                <h4 class="text-muted">Encomienda / Courier</h4>
+                            </div>
+                            <div class="col-4 text-end">
+                                <div style="background:#1E3A5F; color:white; padding:12px; border-radius:6px;">
+                                    <div style="font-size:11px; opacity:0.8;">NÚMERO DE GUÍA</div>
+                                    <div style="font-size:20px; font-weight:bold; letter-spacing:2px;">
+                                        <t t-out="o.name"/>
+                                    </div>
+                                    <div style="font-size:10px; opacity:0.8; margin-top:4px;">
+                                        <t t-out="o.date_request.strftime('%d/%m/%Y %H:%M') if o.date_request else ''"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── QR CODE ── -->
+                        <div t-if="o.qr_code" class="text-center mb-3">
+                            <img t-attf-src="data:image/png;base64,#{o.qr_code.decode()}"
+                                 alt="QR Tracking"
+                                 style="width:90px; height:90px;"/>
+                            <div style="font-size:9px; color:#888; margin-top:4px;">
+                                Escanea para rastrear tu envío
+                            </div>
+                        </div>
+
+                        <!-- ── ESTADO ACTUAL ── -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div t-attf-style="
+                                    background: #{
+                                        '#2E7D32' if o.stage_id.code == 'delivered' else
+                                        '#E65100' if o.stage_id.code in ('in_transit', 'out_delivery') else
+                                        '#B71C1C' if o.stage_id.code == 'cancelled' else
+                                        '#1565C0' if o.stage_id.code == 'received' else
+                                        '#37474F'
+                                    };
+                                    color: white;
+                                    padding: 8px 16px;
+                                    border-radius: 4px;
+                                    text-align: center;
+                                    font-weight: bold;
+                                    font-size: 13px;
+                                    letter-spacing: 1px;
+                                ">
+                                    ESTADO: <t t-out="(o.stage_id.name or '').upper()"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── REMITENTE Y DESTINATARIO ── -->
+                        <div class="row mb-4">
+                            <!-- Remitente -->
+                            <div class="col-6">
+                                <div style="border:2px solid #1E3A5F; border-radius:6px; padding:12px; height:100%;">
+                                    <div style="background:#1E3A5F; color:white; margin:-12px -12px 10px -12px; padding:6px 12px; border-radius:4px 4px 0 0; font-weight:bold; font-size:11px;">
+                                        📤 REMITENTE
+                                    </div>
+                                    <table style="width:100%; font-size:11px;">
+                                        <tr>
+                                            <td style="color:#666; width:35%;">Nombre:</td>
+                                            <td><strong><t t-out="o.sender_name or ''"/></strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#666;">Teléfono:</td>
+                                            <td><t t-out="o.sender_phone or 'N/D'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#666;">Dirección:</td>
+                                            <td><t t-out="o.sender_address or 'N/D'"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Destinatario -->
+                            <div class="col-6">
+                                <div style="border:2px solid #2196A6; border-radius:6px; padding:12px; height:100%;">
+                                    <div style="background:#2196A6; color:white; margin:-12px -12px 10px -12px; padding:6px 12px; border-radius:4px 4px 0 0; font-weight:bold; font-size:11px;">
+                                        📥 DESTINATARIO
+                                    </div>
+                                    <table style="width:100%; font-size:11px;">
+                                        <tr>
+                                            <td style="color:#666; width:35%;">Nombre:</td>
+                                            <td><strong><t t-out="o.recipient_name or ''"/></strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#666;">Teléfono:</td>
+                                            <td><t t-out="o.recipient_phone or 'N/D'"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#666;">Dirección:</td>
+                                            <td><t t-out="o.recipient_address or ''"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#666;">Ciudad:</td>
+                                            <td><strong><t t-out="o.recipient_city or ''"/></strong></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── DETALLES DEL PAQUETE ── -->
+                        <div class="mb-4">
+                            <div style="background:#F5F5F5; border-left:4px solid #1E3A5F; padding:10px 14px; margin-bottom:8px;">
+                                <strong style="color:#1E3A5F; font-size:12px;">📦 DETALLES DEL PAQUETE</strong>
+                            </div>
+                            <table class="table table-sm table-bordered" style="font-size:11px;">
+                                <tr style="background:#EBF4F7;">
+                                    <th style="width:25%;">Tipo de Paquete</th>
+                                    <th style="width:15%;">Peso</th>
+                                    <th style="width:20%;">Dimensiones</th>
+                                    <th style="width:20%;">Valor Declarado</th>
+                                    <th style="width:20%;">Especial</th>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <t t-out="dict(o._fields['package_type'].selection).get(o.package_type, o.package_type or '')"/>
+                                    </td>
+                                    <td><strong><t t-out="o.weight"/> kg</strong></td>
+                                    <td>
+                                        <t t-if="o.dimension_length">
+                                            <t t-out="o.dimension_length"/>cm ×
+                                            <t t-out="o.dimension_width"/>cm ×
+                                            <t t-out="o.dimension_height"/>cm
+                                        </t>
+                                        <t t-else="">N/A</t>
+                                    </td>
+                                    <td>
+                                        L. <t t-esc="'{:,.2f}'.format(o.declared_value)"/>
+                                    </td>
+                                    <td>
+                                        <t t-if="o.is_fragile">⚠️ Frágil  </t>
+                                        <t t-if="o.requires_refrigeration">❄️ Refrigerado</t>
+                                        <t t-if="not o.is_fragile and not o.requires_refrigeration">—</t>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Descripción del contenido -->
+                            <div style="border:1px solid #ddd; padding:8px 12px; border-radius:4px; background:#fafafa;">
+                                <strong style="font-size:10px; color:#666;">DESCRIPCIÓN DEL CONTENIDO:</strong>
+                                <p style="margin:4px 0 0 0; font-size:11px;"><t t-out="o.package_description or ''"/></p>
+                            </div>
+
+                            <!-- Instrucciones especiales -->
+                            <div t-if="o.special_instructions" style="border:1px solid #FFE082; padding:8px 12px; border-radius:4px; background:#FFFDE7; margin-top:6px;">
+                                <strong style="font-size:10px; color:#F57F17;">⚠ INSTRUCCIONES ESPECIALES:</strong>
+                                <p style="margin:4px 0 0 0; font-size:11px;"><t t-out="o.special_instructions"/></p>
+                            </div>
+                        </div>
+
+                        <!-- ── RUTA Y LOGÍSTICA ── -->
+                        <div class="mb-4">
+                            <div style="background:#F5F5F5; border-left:4px solid #2196A6; padding:10px 14px; margin-bottom:8px;">
+                                <strong style="color:#2196A6; font-size:12px;">🗺️ RUTA Y LOGÍSTICA</strong>
+                            </div>
+                            <table class="table table-sm table-bordered" style="font-size:11px;">
+                                <tr style="background:#EBF4F7;">
+                                    <th>Zona de Entrega</th>
+                                    <th>Motorista Asignado</th>
+                                    <th>Fecha Estimada</th>
+                                    <th>Fecha Recepción</th>
+                                    <th>Fecha Despacho</th>
+                                </tr>
+                                <tr>
+                                    <td><strong><t t-out="o.route_id.name or 'N/A'"/></strong></td>
+                                    <td><t t-out="o.driver_id.name if o.driver_id else 'Sin asignar'"/></td>
+                                    <td>
+                                        <t t-out="o.estimated_delivery_date.strftime('%d/%m/%Y') if o.estimated_delivery_date else 'Por confirmar'"/>
+                                    </td>
+                                    <td>
+                                        <t t-out="o.date_received.strftime('%d/%m/%Y') if o.date_received else '—'"/>
+                                    </td>
+                                    <td>
+                                        <t t-out="o.date_dispatched.strftime('%d/%m/%Y') if o.date_dispatched else '—'"/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- ── RESUMEN DE COBRO ── -->
+                        <div class="row mb-4">
+                            <div class="col-7">
+                                <!-- Firmas -->
+                                <div style="border:1px solid #ddd; border-radius:6px; padding:12px;">
+                                    <strong style="font-size:11px; color:#555;">✍️ FIRMAS</strong>
+                                    <div class="row mt-2">
+                                        <div class="col-6 text-center">
+                                            <div t-if="o.signature">
+                                                <img t-attf-src="data:image/png;base64,#{o.signature.decode()}"
+                                                     style="max-width:100px; max-height:50px; border:1px solid #ddd;"/>
+                                            </div>
+                                            <div t-else="" style="height:50px; border-bottom:1px solid #333; margin-bottom:4px;"></div>
+                                            <div style="font-size:9px; color:#666;">
+                                                FIRMA REMITENTE<br/>
+                                                <t t-out="o.signature_name or '_____________________'"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 text-center">
+                                            <div t-if="o.delivery_signature">
+                                                <img t-attf-src="data:image/png;base64,#{o.delivery_signature.decode()}"
+                                                     style="max-width:100px; max-height:50px; border:1px solid #ddd;"/>
+                                            </div>
+                                            <div t-else="" style="height:50px; border-bottom:1px solid #333; margin-bottom:4px;"></div>
+                                            <div style="font-size:9px; color:#666;">
+                                                FIRMA RECEPTOR<br/>
+                                                <t t-out="o.delivery_signature_name or '_____________________'"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-5">
+                                <!-- Totales -->
+                                <div style="border:2px solid #1E3A5F; border-radius:6px; overflow:hidden;">
+                                    <div style="background:#1E3A5F; color:white; padding:6px 12px; font-weight:bold; font-size:11px;">
+                                        💰 RESUMEN DE COBRO
+                                    </div>
+                                    <table style="width:100%; font-size:11px; padding:8px;">
+                                        <tr>
+                                            <td style="padding:4px 10px; color:#555;">Tarifa Base:</td>
+                                            <td style="padding:4px 10px; text-align:right;">
+                                                L. <t t-esc="'{:,.2f}'.format(o.base_amount)"/>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="o.additional_charges">
+                                            <td style="padding:4px 10px; color:#555;">
+                                                Cargos Adicionales<br/>
+                                                <small><t t-out="o.additional_charges_note or ''"/></small>
+                                            </td>
+                                            <td style="padding:4px 10px; text-align:right;">
+                                                L. <t t-esc="'{:,.2f}'.format(o.additional_charges)"/>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="o.discount_amount">
+                                            <td style="padding:4px 10px; color:#2E7D32;">Descuento:</td>
+                                            <td style="padding:4px 10px; text-align:right; color:#2E7D32;">
+                                                - L. <t t-esc="'{:,.2f}'.format(o.discount_amount)"/>
+                                            </td>
+                                        </tr>
+                                        <tr style="border-top:2px solid #1E3A5F; background:#EBF4F7;">
+                                            <td style="padding:6px 10px; font-weight:bold; font-size:13px;">TOTAL:</td>
+                                            <td style="padding:6px 10px; text-align:right; font-weight:bold; font-size:15px; color:#1E3A5F;">
+                                                L. <t t-esc="'{:,.2f}'.format(o.total_amount)"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" style="padding:4px 10px; font-size:9px; color:#888;">
+                                                Factura: <t t-out="o.invoice_id.name if o.invoice_id else 'Pendiente'"/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── FOTOS DEL PAQUETE ── -->
+                        <div t-if="o.image_1 or o.image_2 or o.image_3" class="mb-4">
+                            <div style="background:#F5F5F5; border-left:4px solid #555; padding:8px 14px; margin-bottom:8px;">
+                                <strong style="color:#555; font-size:11px;">📷 FOTOGRAFÍAS DEL PAQUETE</strong>
+                            </div>
+                            <div class="row">
+                                <div t-if="o.image_1" class="col-4 text-center">
+                                    <img t-attf-src="data:image/png;base64,#{o.image_1.decode()}"
+                                         style="max-width:150px; max-height:120px; border:1px solid #ddd; border-radius:4px;"/>
+                                    <div style="font-size:9px; color:#888; margin-top:2px;">Foto 1</div>
+                                </div>
+                                <div t-if="o.image_2" class="col-4 text-center">
+                                    <img t-attf-src="data:image/png;base64,#{o.image_2.decode()}"
+                                         style="max-width:150px; max-height:120px; border:1px solid #ddd; border-radius:4px;"/>
+                                    <div style="font-size:9px; color:#888; margin-top:2px;">Foto 2</div>
+                                </div>
+                                <div t-if="o.image_3" class="col-4 text-center">
+                                    <img t-attf-src="data:image/png;base64,#{o.image_3.decode()}"
+                                         style="max-width:150px; max-height:120px; border:1px solid #ddd; border-radius:4px;"/>
+                                    <div style="font-size:9px; color:#888; margin-top:2px;">Foto 3</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── PIE DE PÁGINA DEL DOCUMENTO ── -->
+                        <div style="border-top:2px solid #1E3A5F; padding-top:10px; margin-top:16px;">
+                            <div class="row">
+                                <div class="col-6" style="font-size:9px; color:#666;">
+                                    <strong>Transporte Conchita</strong> — conchita.neoversa.net<br/>
+                                    Este documento es comprobante oficial del servicio de envío.<br/>
+                                    Para reclamaciones conserve este comprobante.
+                                </div>
+                                <div class="col-6 text-end" style="font-size:9px; color:#666;">
+                                    Generado el: <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/><br/>
+                                    Documento: <t t-out="o.name"/>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════
+         REPORTE HISTÓRICO / LISTADO DE ENVÍOS
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_report_courier_history" model="ir.actions.report">
+        <field name="name">Historial de Envíos</field>
+        <field name="model">courier.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">conchita_courier.report_courier_history_document</field>
+        <field name="report_file">conchita_courier.report_courier_history_document</field>
+        <field name="print_report_name">'Historial-Envios-' + context_timestamp(datetime.datetime.now()).strftime('%Y%m%d')</field>
+        <field name="binding_model_id" ref="model_courier_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_courier_history_document">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+
+                    <!-- Encabezado -->
+                    <div class="row mb-4">
+                        <div class="col-8">
+                            <h2 class="text-primary mb-1">HISTORIAL DE ENVÍOS</h2>
+                            <p class="text-muted mb-0">
+                                Total de registros: <strong><t t-out="len(docs)"/></strong>
+                            </p>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div style="font-size:11px; color:#888;">
+                                Generado: <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de envíos -->
+                    <table class="table table-sm table-bordered" style="font-size:10px;">
+                        <thead>
+                            <tr style="background:#1E3A5F; color:white;">
+                                <th>Guía</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Destinatario</th>
+                                <th>Ciudad</th>
+                                <th>Zona</th>
+                                <th>Peso (kg)</th>
+                                <th>Total (L.)</th>
+                                <th>Motorista</th>
+                                <th>Estado</th>
+                                <th>Entregado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs" t-as="o">
+                                <tr t-attf-style="background: #{
+                                    '#E8F5E9' if o.stage_id.code == 'delivered' else
+                                    '#FFF3E0' if o.stage_id.code in ('in_transit', 'out_delivery') else
+                                    '#FFEBEE' if o.stage_id.code == 'cancelled' else
+                                    '#E3F2FD' if o.stage_id.code == 'received' else
+                                    'white'
+                                }">
+                                    <td><strong><t t-out="o.name"/></strong></td>
+                                    <td><t t-out="o.date_request.strftime('%d/%m/%Y') if o.date_request else ''"/></td>
+                                    <td><t t-out="o.sender_name or ''"/></td>
+                                    <td><t t-out="o.recipient_name or ''"/></td>
+                                    <td><t t-out="o.recipient_city or ''"/></td>
+                                    <td><t t-out="o.route_id.name or ''"/></td>
+                                    <td class="text-end"><t t-out="o.weight"/></td>
+                                    <td class="text-end">
+                                        <t t-esc="'{:,.2f}'.format(o.total_amount)"/>
+                                    </td>
+                                    <td><t t-out="o.driver_id.name if o.driver_id else '—'"/></td>
+                                    <td>
+                                        <span t-attf-style="
+                                            font-weight:bold;
+                                            color: #{
+                                                '#2E7D32' if o.stage_id.code == 'delivered' else
+                                                '#E65100' if o.stage_id.code in ('in_transit','out_delivery') else
+                                                '#B71C1C' if o.stage_id.code == 'cancelled' else
+                                                '#1565C0' if o.stage_id.code == 'received' else
+                                                '#555'
+                                            };
+                                        ">
+                                            <t t-out="o.stage_id.name"/>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <t t-out="o.date_delivered.strftime('%d/%m/%Y') if o.date_delivered else '—'"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <!-- Totales -->
+                        <tfoot>
+                            <tr style="background:#EBF4F7; font-weight:bold; font-size:11px;">
+                                <td colspan="7" class="text-end">TOTAL GENERAL:</td>
+                                <td class="text-end">
+                                    L. <t t-esc="'{:,.2f}'.format(sum(docs.mapped('total_amount')))"/>
+                                </td>
+                                <td colspan="3"></td>
+                            </tr>
+                            <tr style="background:#F5F5F5; font-size:10px;">
+                                <td colspan="11" style="color:#666; padding:6px 8px;">
+                                    Entregados: <strong><t t-out="len(docs.filtered(lambda r: r.stage_id.code == 'delivered'))"/></strong> |
+                                    En Tránsito: <strong><t t-out="len(docs.filtered(lambda r: r.stage_id.code in ('in_transit','out_delivery')))"/></strong> |
+                                    Pendientes: <strong><t t-out="len(docs.filtered(lambda r: r.stage_id.code in ('draft','received')))"/></strong> |
+                                    Cancelados: <strong><t t-out="len(docs.filtered(lambda r: r.stage_id.code == 'cancelled'))"/></strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

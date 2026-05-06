@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════
+         ESTADOS
+    ══════════════════════════════════════ -->
+    <record id="view_courier_stage_list" model="ir.ui.view">
+        <field name="name">courier.stage.list</field>
+        <field name="model">courier.stage</field>
+        <field name="arch" type="xml">
+            <list string="Estados de Envío" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="color" widget="color_picker"/>
+                <field name="is_final"/>
+                <field name="fold"/>
+                <field name="mail_template_id"/>
+                <field name="notify_recipient"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_courier_stage_form" model="ir.ui.view">
+        <field name="name">courier.stage.form</field>
+        <field name="model">courier.stage</field>
+        <field name="arch" type="xml">
+            <form string="Estado de Envío">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="color" widget="color_picker"/>
+                        </group>
+                        <group>
+                            <field name="is_final"/>
+                            <field name="fold"/>
+                            <field name="notify_recipient"/>
+                            <field name="mail_template_id"
+                                   domain="[('model', '=', 'courier.request')]"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Descripción del estado..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_courier_stage" model="ir.actions.act_window">
+        <field name="name">Estados de Envío</field>
+        <field name="res_model">courier.stage</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

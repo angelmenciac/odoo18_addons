@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Secuencia para número de guía -->
+        <record id="seq_courier_request" model="ir.sequence">
+            <field name="name">Número de Guía de Envío</field>
+            <field name="code">courier.request</field>
+            <field name="prefix">TC-%(year)s-</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             ESTADOS DEL FLUJO DE ENVÍO
+        ═══════════════════════════════════════════════════════════ -->
+
+        <record id="stage_draft" model="courier.stage">
+            <field name="name">Solicitud Recibida</field>
+            <field name="code">draft</field>
+            <field name="sequence">10</field>
+            <field name="color">0</field>
+            <field name="fold">False</field>
+            <field name="is_final">False</field>
+        </record>
+
+        <record id="stage_received" model="courier.stage">
+            <field name="name">Recibido en Bodega</field>
+            <field name="code">received</field>
+            <field name="sequence">20</field>
+            <field name="color">3</field>
+            <field name="fold">False</field>
+            <field name="is_final">False</field>
+        </record>
+
+        <record id="stage_in_transit" model="courier.stage">
+            <field name="name">En Tránsito</field>
+            <field name="code">in_transit</field>
+            <field name="sequence">30</field>
+            <field name="color">2</field>
+            <field name="fold">False</field>
+            <field name="is_final">False</field>
+        </record>
+
+        <record id="stage_out_delivery" model="courier.stage">
+            <field name="name">En Reparto</field>
+            <field name="code">out_delivery</field>
+            <field name="sequence">40</field>
+            <field name="color">4</field>
+            <field name="fold">False</field>
+            <field name="is_final">False</field>
+        </record>
+
+        <record id="stage_delivered" model="courier.stage">
+            <field name="name">Entregado</field>
+            <field name="code">delivered</field>
+            <field name="sequence">50</field>
+            <field name="color">10</field>
+            <field name="fold">True</field>
+            <field name="is_final">True</field>
+        </record>
+
+        <record id="stage_cancelled" model="courier.stage">
+            <field name="name">Cancelado</field>
+            <field name="code">cancelled</field>
+            <field name="sequence">90</field>
+            <field name="color">1</field>
+            <field name="fold">True</field>
+            <field name="is_final">True</field>
+        </record>
+
+        <record id="stage_returned" model="courier.stage">
+            <field name="name">Devuelto</field>
+            <field name="code">returned</field>
+            <field name="sequence">95</field>
+            <field name="color">6</field>
+            <field name="fold">True</field>
+            <field name="is_final">True</field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         ACCIÓN DE REPORTE — Etiqueta de Envío
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_report_courier_label" model="ir.actions.report">
+        <field name="name">Etiqueta de Envío (QR)</field>
+        <field name="model">courier.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">conchita_courier.report_courier_label_document</field>
+        <field name="report_file">conchita_courier.report_courier_label_document</field>
+        <field name="print_report_name">'Etiqueta-' + (object.name or '')</field>
+        <field name="paperformat_id" ref="paperformat_courier_label"/>
+        <field name="binding_model_id" ref="model_courier_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         FORMATO DE PAPEL — 10cm x 15cm (tamaño etiqueta estándar)
+         Compatible con impresoras térmicas y de escritorio
+    ══════════════════════════════════════════════════════ -->
+    <record id="paperformat_courier_label" model="report.paperformat">
+        <field name="name">Etiqueta Courier 10x15cm</field>
+        <field name="default" eval="False"/>
+        <field name="format">custom</field>
+        <field name="page_height">150</field>
+        <field name="page_width">100</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">3</field>
+        <field name="margin_bottom">3</field>
+        <field name="margin_left">3</field>
+        <field name="margin_right">3</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">150</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         ACCIÓN ALTERNATIVA — Etiqueta Carta (múltiples por página)
+         Para impresoras estándar cuando no hay impresora térmica
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_report_courier_label_carta" model="ir.actions.report">
+        <field name="name">Etiquetas en Hoja Carta (2x2)</field>
+        <field name="model">courier.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">conchita_courier.report_courier_label_carta_document</field>
+        <field name="report_file">conchita_courier.report_courier_label_carta_document</field>
+        <field name="print_report_name">'Etiquetas-Carta-' + context_timestamp(datetime.datetime.now()).strftime('%Y%m%d')</field>
+        <field name="binding_model_id" ref="model_courier_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════
+         PLANTILLA BASE — Contenido de UNA etiqueta
+         Se reutiliza en ambas versiones (térmica y carta)
+    ══════════════════════════════════════════════════════ -->
+    <template id="report_courier_label_single">
+        <!--
+            Esta plantilla genera el contenido visual de una sola etiqueta.
+            Llamar con t-call y pasar la variable 'o' como el courier.request.
+        -->
+        <div style="
+            width: 94mm;
+            height: 144mm;
+            border: 2px solid #1E3A5F;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            box-sizing: border-box;
+            background: white;
+        ">
+
+            <!-- ── BANDA SUPERIOR: Logo / Empresa ── -->
+            <div style="
+                background: #1E3A5F;
+                color: white;
+                padding: 5px 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            ">
+                <div>
+                    <div style="font-size: 13px; font-weight: bold; letter-spacing: 1px;">
+                        🚚 TRANSPORTE CONCHITA
+                    </div>
+                    <div style="font-size: 8px; opacity: 0.85; margin-top: 1px;">
+                        conchita.neoversa.net
+                    </div>
+                </div>
+                <!-- Número de guía destacado -->
+                <div style="
+                    background: #E8611A;
+                    color: white;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    text-align: center;
+                ">
+                    <div style="font-size: 7px; opacity: 0.9;">GUÍA</div>
+                    <div style="font-size: 12px; font-weight: bold; letter-spacing: 1px;">
+                        <t t-out="o.name"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── CUERPO PRINCIPAL ── -->
+            <div style="padding: 6px 8px;">
+
+                <!-- Zona de entrega destacada -->
+                <div style="
+                    background: #EBF4F7;
+                    border-left: 4px solid #2196A6;
+                    padding: 4px 8px;
+                    margin-bottom: 6px;
+                    border-radius: 0 3px 3px 0;
+                ">
+                    <div style="font-size: 8px; color: #555; text-transform: uppercase;">
+                        Zona de Entrega
+                    </div>
+                    <div style="font-size: 13px; font-weight: bold; color: #1E3A5F;">
+                        <t t-out="o.route_id.name if o.route_id else 'N/A'"/>
+                    </div>
+                    <div style="font-size: 9px; color: #666;">
+                        Entrega estimada en <t t-out="o.route_id.delivery_days if o.route_id else '?'"/> día(s)
+                    </div>
+                </div>
+
+                <!-- Remitente -->
+                <div style="margin-bottom: 5px;">
+                    <div style="font-size: 8px; color: #888; text-transform: uppercase; font-weight: bold;">
+                        📤 Remitente
+                    </div>
+                    <div style="font-size: 10px; font-weight: bold; color: #333;">
+                        <t t-out="o.sender_name or ''"/>
+                    </div>
+                    <div style="font-size: 8px; color: #555;">
+                        <t t-out="o.sender_phone or ''"/>
+                    </div>
+                </div>
+
+                <!-- Separador con flecha -->
+                <div style="text-align: center; color: #1E3A5F; font-size: 14px; margin: 4px 0;">
+                    ↓
+                </div>
+
+                <!-- Destinatario — más destacado -->
+                <div style="
+                    border: 1.5px solid #1E3A5F;
+                    border-radius: 4px;
+                    padding: 5px 8px;
+                    margin-bottom: 5px;
+                    background: #F9FBFC;
+                ">
+                    <div style="font-size: 8px; color: #888; text-transform: uppercase; font-weight: bold;">
+                        📥 Destinatario
+                    </div>
+                    <div style="font-size: 12px; font-weight: bold; color: #1E3A5F; margin-top: 2px;">
+                        <t t-out="o.recipient_name or ''"/>
+                    </div>
+                    <div style="font-size: 9px; color: #333; margin-top: 2px;">
+                        <t t-out="o.recipient_address or ''"/>
+                    </div>
+                    <div style="font-size: 10px; font-weight: bold; color: #E8611A; margin-top: 3px;">
+                        📍 <t t-out="o.recipient_city or ''"/>
+                    </div>
+                    <div style="font-size: 9px; color: #555;">
+                        Tel: <t t-out="o.recipient_phone or 'N/D'"/>
+                    </div>
+                </div>
+
+                <!-- Detalles del paquete + QR en fila -->
+                <div style="display: flex; gap: 6px; align-items: flex-start;">
+
+                    <!-- Detalles del paquete -->
+                    <div style="flex: 1;">
+                        <table style="width: 100%; font-size: 8px; border-collapse: collapse;">
+                            <tr>
+                                <td style="color: #888; padding: 1px 0; width: 45%;">Tipo:</td>
+                                <td style="font-weight: bold; color: #333;">
+                                    <t t-out="dict(o._fields['package_type'].selection).get(o.package_type, '')"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 1px 0;">Peso:</td>
+                                <td style="font-weight: bold; color: #333;">
+                                    <t t-out="o.weight"/> kg
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 1px 0;">Valor decl.:</td>
+                                <td style="color: #333;">
+                                    L. <t t-esc="'{:,.2f}'.format(o.declared_value)"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 1px 0;">Motorista:</td>
+                                <td style="color: #333;">
+                                    <t t-out="o.driver_id.name if o.driver_id else '—'"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="color: #888; padding: 1px 0;">Fecha:</td>
+                                <td style="color: #333;">
+                                    <t t-out="o.date_request.strftime('%d/%m/%Y') if o.date_request else ''"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Alertas especiales -->
+                        <div style="margin-top: 5px;">
+                            <t t-if="o.is_fragile">
+                                <div style="
+                                    background: #FFF3E0;
+                                    border: 1px solid #FFB74D;
+                                    color: #E65100;
+                                    padding: 2px 6px;
+                                    border-radius: 3px;
+                                    font-size: 9px;
+                                    font-weight: bold;
+                                    margin-bottom: 2px;
+                                ">
+                                    ⚠️ FRÁGIL — MANEJAR CON CUIDADO
+                                </div>
+                            </t>
+                            <t t-if="o.requires_refrigeration">
+                                <div style="
+                                    background: #E3F2FD;
+                                    border: 1px solid #64B5F6;
+                                    color: #1565C0;
+                                    padding: 2px 6px;
+                                    border-radius: 3px;
+                                    font-size: 9px;
+                                    font-weight: bold;
+                                ">
+                                    ❄️ REFRIGERADO
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- QR Code -->
+                    <div style="text-align: center; flex-shrink: 0;">
+                        <t t-if="o.qr_code">
+                            <img t-attf-src="data:image/png;base64,#{o.qr_code.decode()}"
+                                 alt="QR"
+                                 style="width: 65px; height: 65px; display: block;"/>
+                        </t>
+                        <t t-else="">
+                            <div style="
+                                width: 65px; height: 65px;
+                                border: 1px dashed #ccc;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 8px;
+                                color: #aaa;
+                            ">QR</div>
+                        </t>
+                        <div style="font-size: 7px; color: #888; margin-top: 2px; width: 65px;">
+                            Rastrear envío
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── BANDA INFERIOR: Total y estado ── -->
+            <div style="
+                background: #F5F5F5;
+                border-top: 1px solid #ddd;
+                padding: 4px 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            ">
+                <div style="font-size: 8px; color: #666;">
+                    <t t-out="o.route_id.code if o.route_id else ''"/> |
+                    Est. <t t-out="o.estimated_delivery_date.strftime('%d/%m/%Y') if o.estimated_delivery_date else 'N/A'"/>
+                </div>
+                <div style="
+                    font-size: 12px;
+                    font-weight: bold;
+                    color: #1E3A5F;
+                ">
+                    L. <t t-esc="'{:,.2f}'.format(o.total_amount)"/>
+                </div>
+            </div>
+
+        </div>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════
+         PLANTILLA ETIQUETA TÉRMICA (1 por página, 10x15cm)
+    ══════════════════════════════════════════════════════ -->
+    <template id="report_courier_label_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div style="
+                    page-break-after: always;
+                    padding: 0;
+                    margin: 0;
+                ">
+                    <t t-call="conchita_courier.report_courier_label_single"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════
+         PLANTILLA ETIQUETAS EN HOJA CARTA (4 etiquetas, 2x2)
+         Para impresoras estándar de escritorio
+    ══════════════════════════════════════════════════════ -->
+    <template id="report_courier_label_carta_document">
+        <t t-call="web.html_container">
+            <!--
+                Agrupa los registros en grupos de 4 para imprimir
+                una grilla 2×2 por hoja carta
+            -->
+            <t t-set="chunks" t-value="[docs[i:i+4] for i in range(0, len(docs), 4)]"/>
+            <t t-foreach="chunks" t-as="chunk">
+                <div style="
+                    page-break-after: always;
+                    padding: 8mm;
+                    box-sizing: border-box;
+                ">
+                    <div style="
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        grid-template-rows: 1fr 1fr;
+                        gap: 6mm;
+                        width: 100%;
+                        height: 100%;
+                    ">
+                        <t t-foreach="chunk" t-as="o">
+                            <div style="
+                                border: 1px dashed #ccc;
+                                overflow: hidden;
+                                border-radius: 4px;
+                            ">
+                                <t t-call="conchita_courier.report_courier_label_single"/>
+                            </div>
+                        </t>
+                        <!-- Relleno si hay menos de 4 etiquetas en la última página -->
+                        <t t-foreach="range(4 - len(chunk))" t-as="empty">
+                            <div style="border: 1px dashed #eee; border-radius: 4px;"></div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

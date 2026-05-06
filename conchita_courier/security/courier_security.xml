@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             CATEGORÍA DE SEGURIDAD
+        ═══════════════════════════════════════════════════════════ -->
+        <record id="module_category_courier" model="ir.module.category">
+            <field name="name">Gestión de Envíos</field>
+            <field name="description">Módulo de courier y encomiendas — Transporte Conchita</field>
+            <field name="sequence">100</field>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             GRUPOS DE USUARIO
+        ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Usuario básico: solo ve sus propias solicitudes -->
+        <record id="group_courier_user" model="res.groups">
+            <field name="name">Usuario de Envíos</field>
+            <field name="category_id" ref="module_category_courier"/>
+            <field name="comment">Puede crear y ver solicitudes de envío.</field>
+        </record>
+
+        <!-- Operador: gestiona envíos, asigna motoristas, cambia estados -->
+        <record id="group_courier_operator" model="res.groups">
+            <field name="name">Operador de Bodega</field>
+            <field name="category_id" ref="module_category_courier"/>
+            <field name="implied_ids" eval="[(4, ref('group_courier_user'))]"/>
+            <field name="comment">Puede gestionar estados, asignar motoristas y procesar envíos.</field>
+        </record>
+
+        <!-- Manager: configuración completa, tarifas, rutas, reportes -->
+        <record id="group_courier_manager" model="res.groups">
+            <field name="name">Gerente de Logística</field>
+            <field name="category_id" ref="module_category_courier"/>
+            <field name="implied_ids" eval="[(4, ref('group_courier_operator'))]"/>
+            <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+            <field name="comment">Acceso completo: configuración de tarifas, rutas, motoristas y reportes.</field>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             REGLAS DE ACCESO A REGISTROS (Record Rules)
+        ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Los clientes del portal solo ven SUS propios envíos -->
+        <record id="rule_courier_portal_own" model="ir.rule">
+            <field name="name">Portal: Solo mis envíos</field>
+            <field name="model_id" ref="model_courier_request"/>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="domain_force">
+                [('partner_id', 'child_of', [user.commercial_partner_id.id])]
+            </field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Usuarios internos: ven todos los envíos -->
+        <record id="rule_courier_internal_all" model="ir.rule">
+            <field name="name">Interno: Ver todos los envíos</field>
+            <field name="model_id" ref="model_courier_request"/>
+            <field name="groups" eval="[(4, ref('group_courier_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Managers pueden eliminar registros -->
+        <record id="rule_courier_manager_unlink" model="ir.rule">
+            <field name="name">Manager: Eliminar envíos</field>
+            <field name="model_id" ref="model_courier_request"/>
+            <field name="groups" eval="[(4, ref('group_courier_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

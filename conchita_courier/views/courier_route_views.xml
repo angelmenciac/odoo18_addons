@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_courier_route_list" model="ir.ui.view">
+        <field name="name">courier.route.list</field>
+        <field name="model">courier.route</field>
+        <field name="arch" type="xml">
+            <list string="Zonas de Entrega">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="delivery_days"/>
+                <field name="base_price"/>
+                <field name="courier_count"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_courier_route_form" model="ir.ui.view">
+        <field name="name">courier.route.form</field>
+        <field name="model">courier.route</field>
+        <field name="arch" type="xml">
+            <form string="Zona de Entrega">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_couriers" type="object"
+                                class="oe_stat_button" icon="fa-truck">
+                            <field name="courier_count" widget="statinfo"
+                                   string="Envíos"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="delivery_days"/>
+                            <field name="base_price"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="driver_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Ciudades y municipios incluidos en esta zona..."/>
+
+                    <separator string="Reglas de Precio por Peso"/>
+                    <field name="price_rule_ids">
+                        <list editable="bottom">
+                            <field name="weight_from"/>
+                            <field name="weight_to"/>
+                            <field name="price"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_courier_route" model="ir.actions.act_window">
+        <field name="name">Zonas de Entrega</field>
+        <field name="res_model">courier.route</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

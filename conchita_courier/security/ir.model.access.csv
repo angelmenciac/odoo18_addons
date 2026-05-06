@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_courier_request_user,courier.request user,model_courier_request,group_courier_user,1,1,1,0
+access_courier_request_manager,courier.request manager,model_courier_request,group_courier_manager,1,1,1,1
+access_courier_request_portal,courier.request portal,model_courier_request,base.group_portal,1,0,0,0
+access_courier_stage_user,courier.stage user,model_courier_stage,group_courier_user,1,0,0,0
+access_courier_stage_manager,courier.stage manager,model_courier_stage,group_courier_manager,1,1,1,1
+access_courier_route_user,courier.route user,model_courier_route,group_courier_user,1,0,0,0
+access_courier_route_manager,courier.route manager,model_courier_route,group_courier_manager,1,1,1,1
+access_courier_price_rule_user,courier.price.rule user,model_courier_price_rule,group_courier_user,1,0,0,0
+access_courier_price_rule_manager,courier.price.rule manager,model_courier_price_rule,group_courier_manager,1,1,1,1
+access_courier_partner_price_manager,courier.partner.price manager,model_courier_partner_price,group_courier_manager,1,1,1,1
+access_courier_driver_user,courier.driver user,model_courier_driver,group_courier_user,1,0,0,0
+access_courier_driver_operator,courier.driver operator,model_courier_driver,group_courier_operator,1,1,1,0
+access_courier_driver_manager,courier.driver manager,model_courier_driver,group_courier_manager,1,1,1,1

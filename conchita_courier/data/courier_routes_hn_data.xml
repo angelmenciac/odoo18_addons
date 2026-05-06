@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ═══════════════════════════════════════════════════════════
+             ZONAS DE HONDURAS — Precargadas
+        ═══════════════════════════════════════════════════════════ -->
+
+        <record id="route_central" model="courier.route">
+            <field name="name">Zona Central</field>
+            <field name="code">ZC</field>
+            <field name="description">Tegucigalpa, Comayagüela, Comayagua, La Paz, Siguatepeque</field>
+            <field name="delivery_days">1</field>
+            <field name="base_price">150.00</field>
+        </record>
+
+        <record id="route_norte" model="courier.route">
+            <field name="name">Zona Norte</field>
+            <field name="code">ZN</field>
+            <field name="description">San Pedro Sula, Choloma, El Progreso, La Lima, Villanueva, Tela, La Ceiba</field>
+            <field name="delivery_days">2</field>
+            <field name="base_price">180.00</field>
+        </record>
+
+        <record id="route_occidente" model="courier.route">
+            <field name="name">Zona Occidente</field>
+            <field name="code">ZO</field>
+            <field name="description">Santa Rosa de Copán, Gracias, La Esperanza, Intibucá, Ocotepeque, Copán Ruinas</field>
+            <field name="delivery_days">3</field>
+            <field name="base_price">220.00</field>
+        </record>
+
+        <record id="route_oriente" model="courier.route">
+            <field name="name">Zona Oriente</field>
+            <field name="code">ZOR</field>
+            <field name="description">Juticalpa, Catacamas, Danlí, El Paraíso, Yoro, El Progreso</field>
+            <field name="delivery_days">2</field>
+            <field name="base_price">200.00</field>
+        </record>
+
+        <record id="route_sur" model="courier.route">
+            <field name="name">Zona Sur</field>
+            <field name="code">ZS</field>
+            <field name="description">Choluteca, Nacaome, San Lorenzo, Valle, El Triunfo</field>
+            <field name="delivery_days">2</field>
+            <field name="base_price">190.00</field>
+        </record>
+
+        <record id="route_atlantico" model="courier.route">
+            <field name="name">Zona Atlántico</field>
+            <field name="code">ZA</field>
+            <field name="description">La Ceiba, Tela, Tocoa, Olanchito, Trujillo, Sonaguera</field>
+            <field name="delivery_days">2</field>
+            <field name="base_price">210.00</field>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             REGLAS DE PRECIO — Zona Central
+        ═══════════════════════════════════════════════════════════ -->
+
+        <record id="rule_central_0_5" model="courier.price.rule">
+            <field name="route_id" ref="route_central"/>
+            <field name="weight_from">0.0</field>
+            <field name="weight_to">5.0</field>
+            <field name="price">150.00</field>
+        </record>
+        <record id="rule_central_5_20" model="courier.price.rule">
+            <field name="route_id" ref="route_central"/>
+            <field name="weight_from">5.0</field>
+            <field name="weight_to">20.0</field>
+            <field name="price">250.00</field>
+        </record>
+        <record id="rule_central_20_50" model="courier.price.rule">
+            <field name="route_id" ref="route_central"/>
+            <field name="weight_from">20.0</field>
+            <field name="weight_to">50.0</field>
+            <field name="price">400.00</field>
+        </record>
+        <record id="rule_central_50_max" model="courier.price.rule">
+            <field name="route_id" ref="route_central"/>
+            <field name="weight_from">50.0</field>
+            <field name="weight_to">999.0</field>
+            <field name="price">700.00</field>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             REGLAS DE PRECIO — Zona Norte
+        ═══════════════════════════════════════════════════════════ -->
+
+        <record id="rule_norte_0_5" model="courier.price.rule">
+            <field name="route_id" ref="route_norte"/>
+            <field name="weight_from">0.0</field>
+            <field name="weight_to">5.0</field>
+            <field name="price">180.00</field>
+        </record>
+        <record id="rule_norte_5_20" model="courier.price.rule">
+            <field name="route_id" ref="route_norte"/>
+            <field name="weight_from">5.0</field>
+            <field name="weight_to">20.0</field>
+            <field name="price">300.00</field>
+        </record>
+        <record id="rule_norte_20_50" model="courier.price.rule">
+            <field name="route_id" ref="route_norte"/>
+            <field name="weight_from">20.0</field>
+            <field name="weight_to">50.0</field>
+            <field name="price">480.00</field>
+        </record>
+        <record id="rule_norte_50_max" model="courier.price.rule">
+            <field name="route_id" ref="route_norte"/>
+            <field name="weight_from">50.0</field>
+            <field name="weight_to">999.0</field>
+            <field name="price">850.00</field>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             REGLAS DE PRECIO — Zona Occidente
+        ═══════════════════════════════════════════════════════════ -->
+
+        <record id="rule_occ_0_5" model="courier.price.rule">
+            <field name="route_id" ref="route_occidente"/>
+            <field name="weight_from">0.0</field>
+            <field name="weight_to">5.0</field>
+            <field name="price">220.00</field>
+        </record>
+        <record id="rule_occ_5_20" model="courier.price.rule">
+            <field name="route_id" ref="route_occidente"/>
+            <field name="weight_from">5.0</field>
+            <field name="weight_to">20.0</field>
+            <field name="price">360.00</field>
+        </record>
+        <record id="rule_occ_20_50" model="courier.price.rule">
+            <field name="route_id" ref="route_occidente"/>
+            <field name="weight_from">20.0</field>
+            <field name="weight_to">50.0</field>
+            <field name="price">550.00</field>
+        </record>
+        <record id="rule_occ_50_max" model="courier.price.rule">
+            <field name="route_id" ref="route_occidente"/>
+            <field name="weight_from">50.0</field>
+            <field name="weight_to">999.0</field>
+            <field name="price">950.00</field>
+        </record>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             REGLAS DE PRECIO — Zona Sur
+        ═══════════════════════════════════════════════════════════ -->
+
+        <record id="rule_sur_0_5" model="courier.price.rule">
+            <field name="route_id" ref="route_sur"/>
+            <field name="weight_from">0.0</field>
+            <field name="weight_to">5.0</field>
+            <field name="price">190.00</field>
+        </record>
+        <record id="rule_sur_5_20" model="courier.price.rule">
+            <field name="route_id" ref="route_sur"/>
+            <field name="weight_from">5.0</field>
+            <field name="weight_to">20.0</field>
+            <field name="price">320.00</field>
+        </record>
+        <record id="rule_sur_20_50" model="courier.price.rule">
+            <field name="route_id" ref="route_sur"/>
+            <field name="weight_from">20.0</field>
+            <field name="weight_to">50.0</field>
+            <field name="price">500.00</field>
+        </record>
+        <record id="rule_sur_50_max" model="courier.price.rule">
+            <field name="route_id" ref="route_sur"/>
+            <field name="weight_from">50.0</field>
+            <field name="weight_to">999.0</field>
+            <field name="price">880.00</field>
+        </record>
+
+    </data>
+</odoo>

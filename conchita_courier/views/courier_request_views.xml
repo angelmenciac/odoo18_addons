@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════
+         VISTA KANBAN
+    ══════════════════════════════════════════════ -->
+    <record id="view_courier_request_kanban" model="ir.ui.view">
+        <field name="name">courier.request.kanban</field>
+        <field name="model">courier.request</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" class="o_kanban_small_column"
+                    group_create="false" group_delete="false">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="recipient_name"/>
+                <field name="route_id"/>
+                <field name="weight"/>
+                <field name="total_amount"/>
+                <field name="stage_id"/>
+                <field name="driver_id"/>
+                <field name="is_fragile"/>
+                <field name="date_request"/>
+                <field name="kanban_state"/>
+                <progressbar field="kanban_state"
+                             colors='{"normal": "200", "done": "success", "blocked": "danger"}'/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <span t-if="record.is_fragile.raw_value"
+                                          class="badge bg-warning ms-1">⚠ Frágil</span>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">⋮</a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div><b>Cliente:</b> <field name="partner_id"/></div>
+                                <div><b>Destinatario:</b> <field name="recipient_name"/></div>
+                                <div><b>Zona:</b> <field name="route_id"/></div>
+                                <div><b>Peso:</b> <field name="weight"/> kg</div>
+                                <div class="o_field_monetary">
+                                    <b>Total:</b> L. <field name="total_amount"/>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <field name="date_request" widget="date"/>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <field name="driver_id" widget="many2one_avatar_user"/>
+                                    <field name="kanban_state" widget="state_selection"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════
+         VISTA LISTA
+    ══════════════════════════════════════════════ -->
+    <record id="view_courier_request_list" model="ir.ui.view">
+        <field name="name">courier.request.list</field>
+        <field name="model">courier.request</field>
+        <field name="arch" type="xml">
+            <list string="Envíos" decoration-success="stage_id.code == 'delivered'"
+                  decoration-danger="stage_id.code in ['cancelled', 'returned']"
+                  decoration-warning="stage_id.code in ['in_transit', 'out_delivery']">
+                <field name="name"/>
+                <field name="date_request"/>
+                <field name="partner_id"/>
+                <field name="recipient_name"/>
+                <field name="recipient_city"/>
+                <field name="route_id"/>
+                <field name="weight"/>
+                <field name="package_type"/>
+                <field name="driver_id"/>
+                <field name="total_amount"/>
+                <field name="stage_id" widget="badge"
+                       decoration-success="code == 'delivered'"
+                       decoration-warning="code in ['in_transit', 'out_delivery']"
+                       decoration-danger="code in ['cancelled', 'returned']"
+                       decoration-info="code == 'received'"/>
+                <field name="is_invoiced" widget="boolean"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════
+         VISTA FORMULARIO PRINCIPAL
+    ══════════════════════════════════════════════ -->
+    <record id="view_courier_request_form" model="ir.ui.view">
+        <field name="name">courier.request.form</field>
+        <field name="model">courier.request</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud de Envío">
+                <header>
+                    <!-- Botones de acción -->
+                    <button name="action_receive" string="Recibir en Bodega"
+                            type="object" class="btn-primary"
+                            invisible="stage_id.code != 'draft'"/>
+                    <button name="action_dispatch" string="Despachar"
+                            type="object" class="btn-primary"
+                            invisible="stage_id.code != 'received'"/>
+                    <button name="action_out_delivery" string="En Reparto"
+                            type="object" class="btn-primary"
+                            invisible="stage_id.code != 'in_transit'"/>
+                    <button name="action_deliver" string="✓ Marcar como Entregado"
+                            type="object" class="btn-success"
+                            invisible="stage_id.code not in ['in_transit', 'out_delivery']"/>
+                    <button name="action_create_invoice" string="Crear Factura"
+                            type="object" class="btn-info"
+                            invisible="stage_id.code == 'cancelled' or is_invoiced"/>
+                    <button name="action_view_invoice" string="Ver Factura"
+                            type="object" class="btn-secondary"
+                            invisible="not is_invoiced"/>
+                    <button name="action_cancel" string="Cancelar Envío"
+                            type="object" class="btn-danger"
+                            invisible="stage_id.code in ['delivered', 'cancelled', 'returned']"/>
+                    <button name="action_reset_draft" string="Regresar a Borrador"
+                            type="object"
+                            invisible="stage_id.code != 'cancelled'"
+                            groups="conchita_courier.group_courier_manager"/>
+
+                    <!-- Barra de estados -->
+                    <field name="stage_id" widget="statusbar"
+                           statusbar_visible="draft,received,in_transit,out_delivery,delivered"/>
+                </header>
+
+                <sheet>
+                    <!-- Número de guía y QR -->
+                    <div class="oe_title">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <label for="name" string="Número de Guía"/>
+                                <h1><field name="name" readonly="1"/></h1>
+                            </div>
+                            <div invisible="not qr_code">
+                                <field name="qr_code" widget="image"
+                                       options="{'size': [100, 100]}"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alertas informativas -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not is_fragile">
+                        ⚠️ <strong>Paquete Frágil</strong> — Manejar con cuidado
+                    </div>
+                    <div class="alert alert-info" role="alert"
+                         invisible="not requires_refrigeration">
+                        ❄️ <strong>Requiere Refrigeración</strong>
+                    </div>
+
+                    <group>
+                        <!-- Columna izquierda: Remitente -->
+                        <group string="📤 Remitente">
+                            <field name="partner_id"
+                                   options="{'no_create': False}"/>
+                            <field name="sender_address" readonly="1"/>
+                            <field name="sender_phone" readonly="1"/>
+                        </group>
+                        <!-- Columna derecha: Destinatario -->
+                        <group string="📥 Destinatario">
+                            <field name="recipient_id"
+                                   domain="['|', ('courier_owner_id', '=', partner_id), '&amp;', ('courier_owner_id', '=', False), ('is_courier_recipient', '=', True)]"
+                                   context="{'default_courier_owner_id': partner_id, 'default_is_courier_recipient': True}"/>
+                            <field name="recipient_phone" readonly="1"/>
+                            <field name="recipient_address" required="1"/>
+                            <field name="recipient_city"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+
+                        <!-- ── TAB: Detalles del Paquete ── -->
+                        <page string="📦 Paquete" name="package">
+                            <group>
+                                <group string="Información del Paquete">
+                                    <field name="package_type"/>
+                                    <field name="weight"/>
+                                    <field name="declared_value"/>
+                                    <field name="is_fragile"/>
+                                    <field name="requires_refrigeration"/>
+                                </group>
+                                <group string="Dimensiones (opcional)">
+                                    <field name="dimension_length"/>
+                                    <field name="dimension_width"/>
+                                    <field name="dimension_height"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="package_description" colspan="2"/>
+                                <field name="special_instructions" colspan="2"/>
+                            </group>
+
+                            <!-- Fotos del paquete -->
+                            <separator string="Fotografías del Paquete"/>
+                            <group col="3">
+                                <field name="image_1" widget="image"
+                                       options="{'size': [200, 200]}"
+                                       string="Foto 1"/>
+                                <field name="image_2" widget="image"
+                                       options="{'size': [200, 200]}"
+                                       string="Foto 2"/>
+                                <field name="image_3" widget="image"
+                                       options="{'size': [200, 200]}"
+                                       string="Foto 3"/>
+                            </group>
+                        </page>
+
+                        <!-- ── TAB: Ruta y Motorista ── -->
+                        <page string="🗺️ Ruta y Entrega" name="route">
+                            <group>
+                                <group string="Logística">
+                                    <field name="route_id"/>
+                                    <field name="driver_id"/>
+                                    <field name="kanban_state" widget="state_selection"/>
+                                </group>
+                                <group string="Fechas">
+                                    <field name="date_request"/>
+                                    <field name="date_received" readonly="1"/>
+                                    <field name="date_dispatched" readonly="1"/>
+                                    <field name="date_delivered" readonly="1"/>
+                                    <field name="estimated_delivery_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── TAB: Tarifas ── -->
+                        <page string="💰 Tarifas" name="pricing">
+                            <group>
+                                <group string="Cálculo de Precio">
+                                    <field name="price_rule_id" readonly="1"/>
+                                    <field name="base_amount" readonly="1"/>
+                                    <field name="additional_charges"/>
+                                    <field name="additional_charges_note"
+                                           invisible="not additional_charges"/>
+                                    <field name="discount_amount"/>
+                                    <field name="total_amount" readonly="1"
+                                           class="fw-bold text-success"/>
+                                </group>
+                                <group string="Facturación">
+                                    <field name="invoice_id" readonly="1"/>
+                                    <field name="invoice_state" readonly="1"
+                                           invisible="not invoice_id"/>
+                                    <field name="is_invoiced" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── TAB: Firma Digital ── -->
+                        <page string="✍️ Firmas" name="signatures">
+                            <group>
+                                <group string="Firma del Remitente (Recepción del Paquete)">
+                                    <field name="signature" widget="signature"/>
+                                    <field name="signature_name"/>
+                                </group>
+                                <group string="Firma del Destinatario (Confirmación de Entrega)">
+                                    <field name="delivery_signature" widget="signature"/>
+                                    <field name="delivery_signature_name"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── TAB: Calificación ── -->
+                        <page string="⭐ Calificación" name="rating"
+                              invisible="stage_id.code != 'delivered'">
+                            <group>
+                                <field name="rating_value"/>
+                                <field name="rating_date" readonly="1"/>
+                                <field name="rating_feedback"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+
+                <!-- Chatter para trazabilidad y comunicaciones -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════
+         VISTA BÚSQUEDA
+    ══════════════════════════════════════════════ -->
+    <record id="view_courier_request_search" model="ir.ui.view">
+        <field name="name">courier.request.search</field>
+        <field name="model">courier.request</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Envíos">
+                <field name="name" string="Número de Guía"/>
+                <field name="partner_id" string="Cliente"/>
+                <field name="recipient_name" string="Destinatario"/>
+                <field name="recipient_city" string="Ciudad"/>
+                <field name="driver_id" string="Motorista"/>
+                <field name="route_id" string="Zona"/>
+
+                <!-- Filtros rápidos -->
+                <filter string="Mis Envíos" name="my_couriers"
+                        domain="[('partner_id.user_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Borrador" name="draft"
+                        domain="[('stage_id.code', '=', 'draft')]"/>
+                <filter string="En Bodega" name="received"
+                        domain="[('stage_id.code', '=', 'received')]"/>
+                <filter string="En Tránsito" name="in_transit"
+                        domain="[('stage_id.code', '=', 'in_transit')]"/>
+                <filter string="En Reparto" name="out_delivery"
+                        domain="[('stage_id.code', '=', 'out_delivery')]"/>
+                <filter string="Entregados" name="delivered"
+                        domain="[('stage_id.code', '=', 'delivered')]"/>
+                <filter string="Cancelados" name="cancelled"
+                        domain="[('stage_id.code', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Sin Facturar" name="not_invoiced"
+                        domain="[('is_invoiced', '=', False), ('stage_id.code', '!=', 'cancelled')]"/>
+                <filter string="Frágiles" name="fragile"
+                        domain="[('is_fragile', '=', True)]"/>
+                <filter string="Hoy" name="today"
+                        domain="[('date_request', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00'))]"/>
+
+                <!-- Agrupar por -->
+                <group expand="0" string="Agrupar por">
+                    <filter string="Estado" name="group_stage"
+                            context="{'group_by': 'stage_id'}"/>
+                    <filter string="Cliente" name="group_partner"
+                            context="{'group_by': 'partner_id'}"/>
+                    <filter string="Zona" name="group_route"
+                            context="{'group_by': 'route_id'}"/>
+                    <filter string="Motorista" name="group_driver"
+                            context="{'group_by': 'driver_id'}"/>
+                    <filter string="Fecha" name="group_date"
+                            context="{'group_by': 'date_request:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción principal -->
+    <record id="action_courier_request" model="ir.actions.act_window">
+        <field name="name">Envíos y Encomiendas</field>
+        <field name="res_model">courier.request</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_courier_request_search"/>
+        <field name="context">{'search_default_not_invoiced': 0}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                ¡Crea tu primer envío!
+            </p>
+            <p>
+                Registra una nueva solicitud de encomienda y gestiona todo
+                el proceso desde la recolección hasta la entrega.
+            </p>
+        </field>
+    </record>
+
+</odoo>

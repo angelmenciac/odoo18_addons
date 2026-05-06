@@ -1,0 +1,123 @@
+/* ═══════════════════════════════════════════════════════
+   Conchita Courier — Estilos del Portal Web
+   ═══════════════════════════════════════════════════════ */
+
+/* Botones de calificación en portal */
+.rate-btn {
+    text-decoration: none;
+    transition: transform 0.2s ease;
+    display: inline-block;
+    cursor: pointer;
+}
+.rate-btn:hover {
+    transform: scale(1.3);
+}
+
+/* Tabla de envíos en portal */
+.o_portal_my_doc_table td,
+.o_portal_my_doc_table th {
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+/* Barra de progreso del estado del envío */
+.courier-progress-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+.courier-progress-step::before {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: -50%;
+    width: 100%;
+    height: 2px;
+    background: #dee2e6;
+    z-index: 0;
+}
+.courier-progress-step:first-child::before {
+    display: none;
+}
+.courier-progress-step.active::before {
+    background: #198754;
+}
+
+/* Card de detalle de envío */
+.courier-detail-card {
+    border: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Badge de estado en listado */
+.courier-status-badge {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+/* Formulario de nuevo envío */
+#price_display {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+/* Zona de alertas especiales en portal */
+.courier-alert-fragile {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 8px 14px;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+.courier-alert-cold {
+    background: #cce5ff;
+    border-left: 4px solid #004085;
+    padding: 8px 14px;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+/* Tracking público */
+.tracking-timeline {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+}
+.tracking-step {
+    flex: 1;
+    text-align: center;
+    font-size: 0.8rem;
+}
+.tracking-step .icon {
+    font-size: 1.6rem;
+    display: block;
+    margin-bottom: 4px;
+}
+.tracking-step.completed .icon,
+.tracking-step.completed small {
+    color: #198754;
+}
+.tracking-step.pending .icon,
+.tracking-step.pending small {
+    color: #adb5bd;
+}
+
+/* QR en portal */
+.courier-qr-container {
+    text-align: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: inline-block;
+}
+.courier-qr-container img {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}

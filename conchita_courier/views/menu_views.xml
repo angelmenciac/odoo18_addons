@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════
+         MENÚ PRINCIPAL
+    ══════════════════════════════════════ -->
+    <menuitem id="menu_courier_root"
+              name="🚚 Encomiendas"
+              sequence="10"
+              web_icon="conchita_courier,static/src/img/icon.png"
+              groups="conchita_courier.group_courier_user"/>
+
+    <!-- Envíos -->
+    <menuitem id="menu_courier_main"
+              name="Envíos"
+              parent="menu_courier_root"
+              sequence="10"/>
+
+    <menuitem id="menu_courier_all"
+              name="Todos los Envíos"
+              parent="menu_courier_main"
+              action="action_courier_request"
+              sequence="10"
+              groups="conchita_courier.group_courier_operator"/>
+
+    <menuitem id="menu_courier_draft"
+              name="Solicitudes Nuevas"
+              parent="menu_courier_main"
+              action="action_courier_request"
+              sequence="20"/>
+
+    <!-- Operaciones -->
+    <menuitem id="menu_courier_operations"
+              name="Operaciones"
+              parent="menu_courier_root"
+              sequence="20"
+              groups="conchita_courier.group_courier_operator"/>
+
+    <menuitem id="menu_courier_drivers"
+              name="Motoristas"
+              parent="menu_courier_operations"
+              action="action_courier_driver"
+              sequence="10"
+              groups="conchita_courier.group_courier_operator"/>
+
+    <!-- Configuración -->
+    <menuitem id="menu_courier_config"
+              name="Configuración"
+              parent="menu_courier_root"
+              sequence="90"
+              groups="conchita_courier.group_courier_manager"/>
+
+    <menuitem id="menu_courier_stages"
+              name="Estados de Envío"
+              parent="menu_courier_config"
+              action="action_courier_stage"
+              sequence="10"
+              groups="conchita_courier.group_courier_manager"/>
+
+    <menuitem id="menu_courier_routes"
+              name="Zonas de Entrega"
+              parent="menu_courier_config"
+              action="action_courier_route"
+              sequence="20"
+              groups="conchita_courier.group_courier_manager"/>
+
+    <menuitem id="menu_courier_prices"
+              name="Reglas de Precio"
+              parent="menu_courier_config"
+              action="action_courier_price_rule"
+              sequence="30"
+              groups="conchita_courier.group_courier_manager"/>
+
+</odoo>

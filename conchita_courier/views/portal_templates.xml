@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         HOME PORTAL — Contador de envíos
+    ══════════════════════════════════════════════════════ -->
+    <template id="portal_my_home_courier" name="Portal My Home: Envíos"
+              inherit_id="portal.portal_my_home"
+              customize_show="True" priority="30">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/conchita_courier/static/src/img/icon.png'"/>
+                <t t-set="title">Mis Envíos</t>
+                <t t-set="url" t-value="'/my/courier'"/>
+                <t t-set="count" t-value="courier_count"/>
+                <t t-set="text">Consultar el estado de tus encomiendas</t>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════
+         LISTA DE ENVÍOS DEL CLIENTE
+    ══════════════════════════════════════════════════════ -->
+    <template id="portal_my_couriers" name="Mis Envíos">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Mis Envíos</t>
+            </t>
+
+            <div class="container">
+                <!-- Botón nuevo envío -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>Mis Encomiendas</h3>
+                    <a href="/my/courier/new" class="btn btn-primary">
+                        <i class="fa fa-plus"/> Nuevo Envío
+                    </a>
+                </div>
+
+                <t t-if="not couriers">
+                    <div class="alert alert-info text-center">
+                        <h4>No tienes envíos registrados aún.</h4>
+                        <a href="/my/courier/new" class="btn btn-primary mt-2">
+                            Crear mi primer envío
+                        </a>
+                    </div>
+                </t>
+                <t t-else="">
+                    <div class="table-responsive">
+                        <table class="table table-hover o_portal_my_doc_table">
+                            <thead>
+                                <tr>
+                                    <th>Guía</th>
+                                    <th>Fecha</th>
+                                    <th>Destinatario</th>
+                                    <th>Ciudad</th>
+                                    <th>Zona</th>
+                                    <th>Total (L.)</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="couriers" t-as="courier">
+                                    <tr>
+                                        <td>
+                                            <a t-attf-href="/my/courier/#{courier.id}">
+                                                <t t-out="courier.name"/>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <t t-out="courier.date_request.strftime('%d/%m/%Y')"/>
+                                        </td>
+                                        <td><t t-out="courier.recipient_name or ''"/></td>
+                                        <td><t t-out="courier.recipient_city or ''"/></td>
+                                        <td><t t-out="courier.route_id.name or ''"/></td>
+                                        <td>
+                                            <t t-esc="'L. {:,.2f}'.format(courier.total_amount)"/>
+                                        </td>
+                                        <td>
+                                            <span t-attf-class="badge #{
+                                                'bg-success' if courier.stage_id.code == 'delivered' else
+                                                'bg-warning text-dark' if courier.stage_id.code in ('in_transit', 'out_delivery') else
+                                                'bg-danger' if courier.stage_id.code == 'cancelled' else
+                                                'bg-info' if courier.stage_id.code == 'received' else
+                                                'bg-secondary'
+                                            }">
+                                                <t t-out="courier.stage_id.name"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div t-if="pager" class="o_portal_pager text-center">
+                        <t t-call="portal.pager"/>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════
+         DETALLE DE UN ENVÍO
+    ══════════════════════════════════════════════════════ -->
+    <template id="portal_courier_detail" name="Detalle de Envío">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+                <!-- Header con número de guía -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fa fa-truck me-2"/>
+                            Envío <t t-out="courier.name"/>
+                        </h4>
+                        <span t-attf-class="badge fs-6 #{
+                            'bg-success' if courier.stage_id.code == 'delivered' else
+                            'bg-warning text-dark' if courier.stage_id.code in ('in_transit', 'out_delivery') else
+                            'bg-danger' if courier.stage_id.code == 'cancelled' else
+                            'bg-info' if courier.stage_id.code == 'received' else
+                            'bg-light text-dark'
+                        }">
+                            <t t-out="courier.stage_id.name"/>
+                        </span>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- Progreso visual -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between text-center">
+                                <t t-foreach="[('draft','Recibida'),('received','En Bodega'),('in_transit','Tránsito'),('out_delivery','Reparto'),('delivered','Entregado')]" t-as="step">
+                                    <div class="flex-fill px-1">
+                                        <div t-attf-class="rounded-circle d-inline-flex align-items-center justify-content-center #{
+                                            'bg-success text-white' if courier.stage_id.sequence >= (
+                                                10 if step[0]=='draft' else
+                                                20 if step[0]=='received' else
+                                                30 if step[0]=='in_transit' else
+                                                40 if step[0]=='out_delivery' else 50
+                                            ) else 'bg-light text-muted border'
+                                        }" style="width:36px;height:36px;font-size:14px;">
+                                            <i t-attf-class="fa #{
+                                                'fa-inbox' if step[0]=='draft' else
+                                                'fa-warehouse' if step[0]=='received' else
+                                                'fa-road' if step[0]=='in_transit' else
+                                                'fa-motorcycle' if step[0]=='out_delivery' else
+                                                'fa-check'
+                                            }"/>
+                                        </div>
+                                        <div class="small mt-1"><t t-out="step[1]"/></div>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Remitente -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted">📤 Remitente</h6>
+                                <p class="mb-1"><strong><t t-out="courier.sender_name or ''"/></strong></p>
+                                <p class="mb-0 text-muted"><t t-out="courier.sender_address or ''"/></p>
+                            </div>
+                            <!-- Destinatario -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted">📥 Destinatario</h6>
+                                <p class="mb-1"><strong><t t-out="courier.recipient_name or ''"/></strong></p>
+                                <p class="mb-0"><t t-out="courier.recipient_address or ''"/></p>
+                                <p class="mb-0 text-muted"><t t-out="courier.recipient_city or ''"/></p>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Zona de Entrega</small>
+                                <strong><t t-out="courier.route_id.name or ''"/></strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Fecha Estimada Entrega</small>
+                                <strong>
+                                    <t t-out="courier.estimated_delivery_date.strftime('%d/%m/%Y') if courier.estimated_delivery_date else 'Por confirmar'"/>
+                                </strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Total</small>
+                                <strong class="text-success fs-5">
+                                    L. <t t-esc="'{:,.2f}'.format(courier.total_amount)"/>
+                                </strong>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <!-- Detalles del paquete -->
+                        <h6 class="text-muted">📦 Detalles del Paquete</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <small class="text-muted">Tipo</small>
+                                <p><t t-out="dict(courier._fields['package_type'].selection).get(courier.package_type, '')"/></p>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted">Peso</small>
+                                <p><t t-out="courier.weight"/> kg</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Descripción</small>
+                                <p><t t-out="courier.package_description"/></p>
+                            </div>
+                        </div>
+
+                        <!-- QR Code -->
+                        <div t-if="courier.qr_code" class="text-center mt-3">
+                            <small class="text-muted d-block mb-2">
+                                Comparte este código QR para rastrear el envío
+                            </small>
+                            <img t-attf-src="data:image/png;base64,#{courier.qr_code.decode()}"
+                                 alt="QR Tracking" width="120" height="120"/>
+                        </div>
+
+                        <!-- Calificación si fue entregado -->
+                        <div t-if="courier.stage_id.code == 'delivered' and not courier.rating_value"
+                             class="mt-4 p-3 bg-light rounded">
+                            <h6>⭐ ¿Cómo fue tu experiencia?</h6>
+                            <div class="d-flex gap-3 justify-content-center fs-2">
+                                <t t-foreach="[('1','😞'),('2','😐'),('3','😊'),('4','😃'),('5','🤩')]" t-as="r">
+                                    <a href="#" t-attf-class="rate-btn"
+                                       t-att-data-rating="r[0]"
+                                       t-att-data-courier-id="courier.id">
+                                        <t t-out="r[1]"/>
+                                    </a>
+                                </t>
+                            </div>
+                        </div>
+                        <div t-if="courier.rating_value" class="mt-3 alert alert-success">
+                            Tu calificación: <strong><t t-out="dict(courier._fields['rating_value'].selection).get(courier.rating_value, '')"/></strong>
+                            <span t-if="courier.rating_feedback"> — <t t-out="courier.rating_feedback"/></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════
+         FORMULARIO DE NUEVO ENVÍO DESDE PORTAL
+    ══════════════════════════════════════════════════════ -->
+    <template id="portal_new_courier" name="Nuevo Envío">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fa fa-plus me-2"/>Nueva Solicitud de Envío</h4>
+                    </div>
+                    <div class="card-body">
+                        <form action="/my/courier/submit" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                            <div class="row">
+                                <!-- Zona de entrega -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Zona de Entrega *</label>
+                                    <select name="route_id" class="form-select"
+                                            id="route_select" required="1">
+                                        <option value="">-- Seleccionar zona --</option>
+                                        <t t-foreach="routes" t-as="route">
+                                            <option t-att-value="route.id"
+                                                    t-att-selected="post.get('route_id') == str(route.id)">
+                                                <t t-out="route.name"/> —
+                                                Entrega en <t t-out="route.delivery_days"/> día(s)
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+
+                                <!-- Ciudad destino -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Ciudad / Municipio Destino *</label>
+                                    <input type="text" name="recipient_city"
+                                           class="form-control" required="1"
+                                           t-att-value="post.get('recipient_city','')"
+                                           placeholder="Ej: San Pedro Sula"/>
+                                </div>
+                            </div>
+
+                            <!-- Destinatario -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Destinatario *</label>
+                                <select name="recipient_id" class="form-select" id="recipient_select">
+                                    <option value="">-- Crear nuevo destinatario --</option>
+                                    <t t-foreach="recipients" t-as="rec">
+                                        <option t-att-value="rec.id">
+                                            <t t-out="rec.name"/>
+                                            <t t-if="rec.phone"> — <t t-out="rec.phone"/></t>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+
+                            <!-- Nuevo destinatario -->
+                            <div class="row border rounded p-3 mb-3 bg-light" id="new_recipient_section">
+                                <h6 class="text-muted">Datos del Nuevo Destinatario</h6>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">Nombre del Destinatario</label>
+                                    <input type="text" name="new_recipient_name"
+                                           class="form-control"
+                                           t-att-value="post.get('new_recipient_name','')"
+                                           placeholder="Nombre completo"/>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label">Teléfono del Destinatario</label>
+                                    <input type="text" name="new_recipient_phone"
+                                           class="form-control"
+                                           t-att-value="post.get('new_recipient_phone','')"
+                                           placeholder="Ej: +504 9999-9999"/>
+                                </div>
+                            </div>
+
+                            <!-- Dirección de entrega -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Dirección de Entrega *</label>
+                                <input type="text" name="recipient_address"
+                                       class="form-control" required="1"
+                                       t-att-value="post.get('recipient_address','')"
+                                       placeholder="Colonia, calle, número de casa, referencia..."/>
+                            </div>
+
+                            <div class="row">
+                                <!-- Tipo de paquete -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Tipo de Paquete *</label>
+                                    <select name="package_type" class="form-select" required="1">
+                                        <option value="sobre">Sobre / Documentos</option>
+                                        <option value="caja_pequena">Caja Pequeña</option>
+                                        <option value="caja_mediana">Caja Mediana</option>
+                                        <option value="caja_grande">Caja Grande</option>
+                                        <option value="paquete">Paquete Irregular</option>
+                                        <option value="fragil">Paquete Frágil</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+
+                                <!-- Peso -->
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Peso (kg) *</label>
+                                    <input type="number" name="weight" class="form-control"
+                                           id="weight_input" step="0.1" min="0.1"
+                                           required="1"
+                                           t-att-value="post.get('weight', '1.0')"
+                                           placeholder="1.0"/>
+                                </div>
+
+                                <!-- Precio estimado -->
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Precio Estimado</label>
+                                    <div class="form-control bg-light fw-bold text-success"
+                                         id="price_display">
+                                        Selecciona zona y peso
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Descripción del Contenido *</label>
+                                <textarea name="package_description" class="form-control"
+                                          rows="3" required="1"
+                                          placeholder="Describe el contenido del paquete..."><t t-out="post.get('package_description','')"/></textarea>
+                            </div>
+
+                            <div class="row">
+                                <!-- Valor declarado -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Valor Declarado (L.)</label>
+                                    <input type="number" name="declared_value"
+                                           class="form-control" step="0.01" min="0"
+                                           t-att-value="post.get('declared_value', '0')"
+                                           placeholder="0.00"/>
+                                </div>
+
+                                <!-- Frágil -->
+                                <div class="col-md-6 mb-3 d-flex align-items-end">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="is_fragile"
+                                               class="form-check-input" id="is_fragile"
+                                               t-att-checked="post.get('is_fragile')"/>
+                                        <label class="form-check-label" for="is_fragile">
+                                            ⚠️ Paquete Frágil — Requiere cuidado especial
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Instrucciones especiales -->
+                            <div class="mb-4">
+                                <label class="form-label">Instrucciones Especiales</label>
+                                <textarea name="special_instructions" class="form-control" rows="2"
+                                          placeholder="Horario de entrega, referencias especiales, etc."><t t-out="post.get('special_instructions','')"/></textarea>
+                            </div>
+
+                            <div class="d-flex gap-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fa fa-paper-plane me-2"/>Enviar Solicitud
+                                </button>
+                                <a href="/my/courier" class="btn btn-outline-secondary btn-lg">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Script para calcular precio en tiempo real -->
+            <script type="text/javascript">
+                document.addEventListener('DOMContentLoaded', function() {
+                    const routeSelect = document.getElementById('route_select');
+                    const weightInput = document.getElementById('weight_input');
+                    const priceDisplay = document.getElementById('price_display');
+                    const recipientSelect = document.getElementById('recipient_select');
+                    const newRecipientSection = document.getElementById('new_recipient_section');
+
+                    // Mostrar/ocultar sección de nuevo destinatario
+                    function toggleNewRecipient() {
+                        if (recipientSelect.value === '') {
+                            newRecipientSection.style.display = 'block';
+                        } else {
+                            newRecipientSection.style.display = 'none';
+                        }
+                    }
+                    recipientSelect.addEventListener('change', toggleNewRecipient);
+                    toggleNewRecipient();
+
+                    // Calcular precio estimado
+                    async function updatePrice() {
+                        const routeId = routeSelect.value;
+                        const weight = weightInput.value;
+                        if (!routeId || !weight) {
+                            priceDisplay.textContent = 'Selecciona zona y peso';
+                            return;
+                        }
+                        try {
+                            const response = await fetch('/courier/get_price', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0', method: 'call', id: 1,
+                                    params: { route_id: routeId, weight: weight }
+                                })
+                            });
+                            const data = await response.json();
+                            if (data.result &amp;&amp; data.result.success) {
+                                priceDisplay.textContent = 'L. ' + data.result.price.toFixed(2);
+                            }
+                        } catch(e) {
+                            priceDisplay.textContent = 'Error al calcular';
+                        }
+                    }
+
+                    routeSelect.addEventListener('change', updatePrice);
+                    weightInput.addEventListener('input', updatePrice);
+                });
+            </script>
+        </t>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════
+         TRACKING PÚBLICO (sin login)
+    ══════════════════════════════════════════════════════ -->
+    <template id="public_tracking" name="Rastreo de Envío">
+        <t t-call="website.layout">
+            <div class="container mt-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card shadow">
+                            <div class="card-header bg-primary text-white text-center">
+                                <h3><i class="fa fa-search me-2"/>Rastrear Envío</h3>
+                                <p class="mb-0">Ingresa el número de guía para consultar el estado</p>
+                            </div>
+                            <div class="card-body">
+                                <!-- Formulario de búsqueda -->
+                                <form action="/courier/track" method="get" class="mb-4">
+                                    <div class="input-group input-group-lg">
+                                        <input type="text" name="ref" class="form-control"
+                                               placeholder="Ej: TC-2024-00001"
+                                               t-att-value="ref or ''"
+                                               style="text-transform:uppercase"/>
+                                        <button class="btn btn-primary" type="submit">
+                                            <i class="fa fa-search"/> Rastrear
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- Error -->
+                                <div t-if="error" class="alert alert-warning">
+                                    <i class="fa fa-exclamation-triangle me-2"/>
+                                    <t t-out="error"/>
+                                </div>
+
+                                <!-- Resultado del rastreo -->
+                                <div t-if="courier">
+                                    <div class="border rounded p-4 bg-light">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h4 class="mb-1">Guía: <strong><t t-out="courier.name"/></strong></h4>
+                                                <small class="text-muted">
+                                                    Solicitado el <t t-out="courier.date_request.strftime('%d/%m/%Y')"/>
+                                                </small>
+                                            </div>
+                                            <span t-attf-class="badge fs-6 #{
+                                                'bg-success' if courier.stage_id.code == 'delivered' else
+                                                'bg-warning text-dark' if courier.stage_id.code in ('in_transit', 'out_delivery') else
+                                                'bg-danger' if courier.stage_id.code == 'cancelled' else
+                                                'bg-info' if courier.stage_id.code == 'received' else
+                                                'bg-secondary'
+                                            }">
+                                                <t t-out="courier.stage_id.name"/>
+                                            </span>
+                                        </div>
+
+                                        <!-- Info básica sin revelar datos privados -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Destino</small>
+                                                <p class="mb-1"><strong><t t-out="courier.recipient_city or 'N/D'"/></strong></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Zona</small>
+                                                <p class="mb-1"><strong><t t-out="courier.route_id.name or 'N/D'"/></strong></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted">Fecha Estimada</small>
+                                                <p class="mb-1">
+                                                    <strong>
+                                                        <t t-out="courier.estimated_delivery_date.strftime('%d/%m/%Y') if courier.estimated_delivery_date else 'Por confirmar'"/>
+                                                    </strong>
+                                                </p>
+                                            </div>
+                                            <div t-if="courier.date_delivered" class="col-md-6">
+                                                <small class="text-muted">Fecha Entregado</small>
+                                                <p class="mb-1">
+                                                    <strong class="text-success">
+                                                        <t t-out="courier.date_delivered.strftime('%d/%m/%Y %H:%M')"/>
+                                                    </strong>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Línea de tiempo -->
+                                        <div class="mt-3">
+                                            <div class="d-flex justify-content-between">
+                                                <t t-foreach="[('draft','📋','Solicitado'),('received','🏭','En Bodega'),('in_transit','🚛','En Tránsito'),('out_delivery','🏍️','En Reparto'),('delivered','✅','Entregado')]" t-as="step">
+                                                    <div class="text-center flex-fill">
+                                                        <div t-attf-class="#{
+                                                            'text-success fw-bold' if courier.stage_id.sequence >= (10 if step[0]=='draft' else 20 if step[0]=='received' else 30 if step[0]=='in_transit' else 40 if step[0]=='out_delivery' else 50) else 'text-muted'
+                                                        }">
+                                                            <div style="font-size:1.5rem;"><t t-out="step[1]"/></div>
+                                                            <small><t t-out="step[2]"/></small>
+                                                        </div>
+                                                    </div>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
