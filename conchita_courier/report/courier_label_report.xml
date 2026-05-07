@@ -2,21 +2,6 @@
 <odoo>
 
     <!-- ══════════════════════════════════════════════════════
-         ACCIÓN DE REPORTE — Etiqueta de Envío
-    ══════════════════════════════════════════════════════ -->
-    <record id="action_report_courier_label" model="ir.actions.report">
-        <field name="name">Etiqueta de Envío (QR)</field>
-        <field name="model">courier.request</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">conchita_courier.report_courier_label_document</field>
-        <field name="report_file">conchita_courier.report_courier_label_document</field>
-        <field name="print_report_name">'Etiqueta-' + (object.name or '')</field>
-        <field name="paperformat_id" ref="paperformat_courier_label"/>
-        <field name="binding_model_id" ref="model_courier_request"/>
-        <field name="binding_type">report</field>
-    </record>
-
-    <!-- ══════════════════════════════════════════════════════
          FORMATO DE PAPEL — 10cm x 15cm (tamaño etiqueta estándar)
          Compatible con impresoras térmicas y de escritorio
     ══════════════════════════════════════════════════════ -->
@@ -35,7 +20,23 @@
         <field name="header_spacing">0</field>
         <field name="dpi">150</field>
     </record>
+    
+    <!-- ══════════════════════════════════════════════════════
+         ACCIÓN DE REPORTE — Etiqueta de Envío
+    ══════════════════════════════════════════════════════ -->
+    <record id="action_report_courier_label" model="ir.actions.report">
+        <field name="name">Etiqueta de Envío (QR)</field>
+        <field name="model">courier.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">conchita_courier.report_courier_label_document</field>
+        <field name="report_file">conchita_courier.report_courier_label_document</field>
+        <field name="print_report_name">'Etiqueta-' + (object.name or '')</field>
+        <field name="paperformat_id" ref="paperformat_courier_label"/>
+        <field name="binding_model_id" ref="model_courier_request"/>
+        <field name="binding_type">report</field>
+    </record>
 
+    
     <!-- ══════════════════════════════════════════════════════
          ACCIÓN ALTERNATIVA — Etiqueta Carta (múltiples por página)
          Para impresoras estándar cuando no hay impresora térmica
