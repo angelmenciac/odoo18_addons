@@ -57,6 +57,14 @@ class CourierRequest(models.Model):
         group_expand='_read_group_stage_ids',
         copy=False,
     )
+    # Campo auxiliar para decoradores de vista lista/kanban
+    # Odoo 18 no permite stage_id.code directamente en decoration-*
+    stage_code = fields.Selection(
+        related='stage_id.code',
+        string='Código de Estado',
+        store=True,
+        readonly=True,
+    )
     kanban_state = fields.Selection([
         ('normal', 'En Proceso'),
         ('done', 'Listo'),

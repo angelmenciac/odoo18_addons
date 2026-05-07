@@ -70,9 +70,9 @@
         <field name="name">courier.request.list</field>
         <field name="model">courier.request</field>
         <field name="arch" type="xml">
-            <list string="Envíos" decoration-success="stage_id.code == 'delivered'"
-                  decoration-danger="stage_id.code in ['cancelled', 'returned']"
-                  decoration-warning="stage_id.code in ['in_transit', 'out_delivery']">
+            <list string="Envíos" decoration-success="stage_code == 'delivered'"
+                  decoration-danger="stage_code in ['cancelled', 'returned']"
+                  decoration-warning="stage_code in ['in_transit', 'out_delivery']">
                 <field name="name"/>
                 <field name="date_request"/>
                 <field name="partner_id"/>
@@ -83,11 +83,13 @@
                 <field name="package_type"/>
                 <field name="driver_id"/>
                 <field name="total_amount"/>
-                <field name="stage_id" widget="badge"
-                       decoration-success="code == 'delivered'"
-                       decoration-warning="code in ['in_transit', 'out_delivery']"
-                       decoration-danger="code in ['cancelled', 'returned']"
-                       decoration-info="code == 'received'"/>
+                <field name="stage_code" widget="badge"
+                       decoration-success="stage_code == 'delivered'"
+                       decoration-warning="stage_code in ['in_transit', 'out_delivery']"
+                       decoration-danger="stage_code in ['cancelled', 'returned']"
+                       decoration-info="stage_code == 'received'"
+                       optional="hide"/>
+                <field name="stage_id" column_invisible="1"/>
                 <field name="is_invoiced" widget="boolean"/>
             </list>
         </field>
@@ -105,28 +107,28 @@
                     <!-- Botones de acción -->
                     <button name="action_receive" string="Recibir en Bodega"
                             type="object" class="btn-primary"
-                            invisible="stage_id.code != 'draft'"/>
+                            invisible="stage_code != 'draft'"/>
                     <button name="action_dispatch" string="Despachar"
                             type="object" class="btn-primary"
-                            invisible="stage_id.code != 'received'"/>
+                            invisible="stage_code != 'received'"/>
                     <button name="action_out_delivery" string="En Reparto"
                             type="object" class="btn-primary"
-                            invisible="stage_id.code != 'in_transit'"/>
+                            invisible="stage_code != 'in_transit'"/>
                     <button name="action_deliver" string="✓ Marcar como Entregado"
                             type="object" class="btn-success"
-                            invisible="stage_id.code not in ['in_transit', 'out_delivery']"/>
+                            invisible="stage_code not in ['in_transit', 'out_delivery']"/>
                     <button name="action_create_invoice" string="Crear Factura"
                             type="object" class="btn-info"
-                            invisible="stage_id.code == 'cancelled' or is_invoiced"/>
+                            invisible="stage_code == 'cancelled' or is_invoiced"/>
                     <button name="action_view_invoice" string="Ver Factura"
                             type="object" class="btn-secondary"
                             invisible="not is_invoiced"/>
                     <button name="action_cancel" string="Cancelar Envío"
                             type="object" class="btn-danger"
-                            invisible="stage_id.code in ['delivered', 'cancelled', 'returned']"/>
+                            invisible="stage_code in ['delivered', 'cancelled', 'returned']"/>
                     <button name="action_reset_draft" string="Regresar a Borrador"
                             type="object"
-                            invisible="stage_id.code != 'cancelled'"
+                            invisible="stage_code != 'cancelled'"
                             groups="conchita_courier.group_courier_manager"/>
 
                     <!-- Barra de estados -->
@@ -272,7 +274,7 @@
 
                         <!-- ── TAB: Calificación ── -->
                         <page string="⭐ Calificación" name="rating"
-                              invisible="stage_id.code != 'delivered'">
+                              invisible="stage_code != 'delivered'">
                             <group>
                                 <field name="rating_value"/>
                                 <field name="rating_date" readonly="1"/>
