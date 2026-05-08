@@ -2,8 +2,13 @@
 <odoo>
 
     <!-- ══════════════════════════════════════════════════════
+         ACCIÓN DE REPORTE — Etiqueta de Envío
+    ══════════════════════════════════════════════════════ -->
+    
+    <!-- ══════════════════════════════════════════════════════
          FORMATO DE PAPEL — 10cm x 15cm (tamaño etiqueta estándar)
          Compatible con impresoras térmicas y de escritorio
+         DEBE estar ANTES que cualquier action que lo referencie
     ══════════════════════════════════════════════════════ -->
     <record id="paperformat_courier_label" model="report.paperformat">
         <field name="name">Etiqueta Courier 10x15cm</field>
@@ -20,10 +25,7 @@
         <field name="header_spacing">0</field>
         <field name="dpi">150</field>
     </record>
-    
-    <!-- ══════════════════════════════════════════════════════
-         ACCIÓN DE REPORTE — Etiqueta de Envío
-    ══════════════════════════════════════════════════════ -->
+
     <record id="action_report_courier_label" model="ir.actions.report">
         <field name="name">Etiqueta de Envío (QR)</field>
         <field name="model">courier.request</field>
@@ -36,7 +38,11 @@
         <field name="binding_type">report</field>
     </record>
 
-    
+    <!-- ══════════════════════════════════════════════════════
+         FORMATO DE PAPEL — 10cm x 15cm (tamaño etiqueta estándar)
+         Compatible con impresoras térmicas y de escritorio
+    ══════════════════════════════════════════════════════ -->
+
     <!-- ══════════════════════════════════════════════════════
          ACCIÓN ALTERNATIVA — Etiqueta Carta (múltiples por página)
          Para impresoras estándar cuando no hay impresora térmica

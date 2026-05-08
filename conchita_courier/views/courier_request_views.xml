@@ -162,21 +162,27 @@
                     </div>
 
                     <group>
-                        <!-- Columna izquierda: Remitente -->
+                        <!-- Columna izquierda: Remitente
+                             Interno: editable | Portal: solo lectura (es el propio cliente) -->
                         <group string="📤 Remitente">
                             <field name="partner_id"
+                                   readonly="not context.get('allowed_company_ids')"
                                    options="{'no_create': False}"/>
                             <field name="sender_address" readonly="1"/>
                             <field name="sender_phone" readonly="1"/>
                         </group>
-                        <!-- Columna derecha: Destinatario -->
+                        <!-- Columna derecha: Destinatario
+                             Dominio: solo destinatarios del cliente o públicos -->
                         <group string="📥 Destinatario">
                             <field name="recipient_id"
-                                   domain="['|', ('courier_owner_id', '=', partner_id), '&amp;', ('courier_owner_id', '=', False), ('is_courier_recipient', '=', True)]"
-                                   context="{'default_courier_owner_id': partner_id, 'default_is_courier_recipient': True}"/>
+                                   domain="[('is_courier_recipient', '=', True), '|', ('courier_owner_ids', 'in', [partner_id or 0]), ('courier_owner_ids', '=', False)]"
+                                   context="{'default_is_courier_recipient': True}"
+                                   options="{'no_create': False}"/>
                             <field name="recipient_phone" readonly="1"/>
-                            <field name="recipient_address" required="1"/>
-                            <field name="recipient_city"/>
+                            <field name="recipient_address"
+                                   placeholder="Se autocompleta al seleccionar destinatario"/>
+                            <field name="recipient_city"
+                                   placeholder="Se autocompleta al seleccionar destinatario"/>
                         </group>
                     </group>
 

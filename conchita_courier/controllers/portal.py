@@ -101,13 +101,13 @@ class CourierPortal(CustomerPortal):
         partner = request.env.user.partner_id
         routes = request.env['courier.route'].sudo().search([('active', '=', True)])
 
-        # Destinatarios disponibles para este cliente
+        # Destinatarios disponibles para este cliente (privados + públicos)
+        commercial = partner.commercial_partner_id
         recipients = request.env['res.partner'].sudo().search([
-            '|',
-            ('courier_owner_id', '=', partner.commercial_partner_id.id),
-            '&',
-            ('courier_owner_id', '=', False),
             ('is_courier_recipient', '=', True),
+            '|',
+            ('courier_owner_ids', 'in', [commercial.id]),
+            ('courier_owner_ids', '=', False),
         ])
 
         return request.render('conchita_courier.portal_new_courier', {
@@ -121,26 +121,29 @@ class CourierPortal(CustomerPortal):
                 website=True, methods=['POST'])
     def portal_submit_courier(self, **post):
         partner = request.env.user.partner_id
+        commercial = partner.commercial_partner_id
         error = {}
 
         # Validaciones básicas
-        required = ['route_id', 'package_description', 'weight',
-                    'recipient_address', 'recipient_city', 'package_type']
+        required = ['route_id', 'package_description', 'weight', 'package_type']
         for field in required:
             if not post.get(field):
                 error[field] = True
+        if not post.get('recipient_address'):
+            error['recipient_address'] = True
+        if not post.get('recipient_city'):
+            error['recipient_city'] = True
 
         if error:
             routes = request.env['courier.route'].sudo().search([('active', '=', True)])
             recipients = request.env['res.partner'].sudo().search([
-                '|',
-                ('courier_owner_id', '=', partner.commercial_partner_id.id),
-                '&',
-                ('courier_owner_id', '=', False),
                 ('is_courier_recipient', '=', True),
+                '|',
+                ('courier_owner_ids', 'in', [commercial.id]),
+                ('courier_owner_ids', '=', False),
             ])
             return request.render('conchita_courier.portal_new_courier', {
-                'partner': partner,
+                'partner': commercial,
                 'routes': routes,
                 'recipients': recipients,
                 'error': error,
@@ -148,36 +151,60 @@ class CourierPortal(CustomerPortal):
                 'page_name': 'courier',
             })
 
-        # Crear o recuperar destinatario
+        # ── Gestión del destinatario ──
         recipient_id = post.get('recipient_id')
-        if not recipient_id and post.get('new_recipient_name'):
-            new_rec = request.env['res.partner'].sudo().create({
+
+        if recipient_id:
+            # Destinatario existente seleccionado
+            recipient_id = int(recipient_id)
+        elif post.get('new_recipient_name'):
+            # Crear nuevo destinatario
+            new_rec_vals = {
                 'name': post['new_recipient_name'],
                 'phone': post.get('new_recipient_phone', ''),
+                'street': post.get('recipient_address', ''),
+                'city': post.get('recipient_city', ''),
                 'is_courier_recipient': True,
-                'courier_owner_id': partner.commercial_partner_id.id,
-            })
+            }
+            # Si marcó "guardar", vincularlo a este cliente
+            if post.get('save_recipient'):
+                new_rec_vals['courier_owner_ids'] = [(4, commercial.id)]
+            new_rec = request.env['res.partner'].sudo().create(new_rec_vals)
             recipient_id = new_rec.id
-        elif recipient_id:
-            recipient_id = int(recipient_id)
+        else:
+            error['new_recipient_name'] = True
+            routes = request.env['courier.route'].sudo().search([('active', '=', True)])
+            recipients = request.env['res.partner'].sudo().search([
+                ('is_courier_recipient', '=', True),
+                '|',
+                ('courier_owner_ids', 'in', [commercial.id]),
+                ('courier_owner_ids', '=', False),
+            ])
+            return request.render('conchita_courier.portal_new_courier', {
+                'partner': commercial,
+                'routes': routes,
+                'recipients': recipients,
+                'error': error,
+                'post': post,
+                'page_name': 'courier',
+            })
 
-        # Crear la solicitud de envío
+        # ── Crear la solicitud de envío ──
         vals = {
-            'partner_id': partner.commercial_partner_id.id,
+            'partner_id': commercial.id,
             'recipient_id': recipient_id,
             'route_id': int(post['route_id']),
             'package_description': post['package_description'],
             'weight': float(post.get('weight', 1.0)),
             'package_type': post['package_type'],
-            'recipient_address': post['recipient_address'],
-            'recipient_city': post['recipient_city'],
+            'recipient_address': post.get('recipient_address', ''),
+            'recipient_city': post.get('recipient_city', ''),
             'special_instructions': post.get('special_instructions', ''),
-            'declared_value': float(post.get('declared_value', 0.0)),
+            'declared_value': float(post.get('declared_value', 0.0) or 0.0),
             'is_fragile': bool(post.get('is_fragile')),
         }
 
         courier = request.env['courier.request'].sudo().create(vals)
-
         return request.redirect(f'/my/courier/{courier.id}')
 
     # ── Guardar calificación del cliente ──────────────────────────────────────

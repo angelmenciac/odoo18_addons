@@ -244,6 +244,9 @@
     <!-- ══════════════════════════════════════════════════════
          FORMULARIO DE NUEVO ENVÍO DESDE PORTAL
     ══════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════════════
+         FORMULARIO DE NUEVO ENVÍO DESDE PORTAL
+    ══════════════════════════════════════════════════════ -->
     <template id="portal_new_courier" name="Nuevo Envío">
         <t t-call="portal.portal_layout">
             <div class="container mt-4">
@@ -255,148 +258,212 @@
                         <form action="/my/courier/submit" method="post">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
-                            <div class="row">
-                                <!-- Zona de entrega -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Zona de Entrega *</label>
-                                    <select name="route_id" class="form-select"
-                                            id="route_select" required="1">
-                                        <option value="">-- Seleccionar zona --</option>
-                                        <t t-foreach="routes" t-as="route">
-                                            <option t-att-value="route.id"
-                                                    t-att-selected="post.get('route_id') == str(route.id)">
-                                                <t t-out="route.name"/> —
-                                                Entrega en <t t-out="route.delivery_days"/> día(s)
-                                            </option>
-                                        </t>
-                                    </select>
-                                </div>
-
-                                <!-- Ciudad destino -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Ciudad / Municipio Destino *</label>
-                                    <input type="text" name="recipient_city"
-                                           class="form-control" required="1"
-                                           t-att-value="post.get('recipient_city','')"
-                                           placeholder="Ej: San Pedro Sula"/>
-                                </div>
-                            </div>
-
-                            <!-- Destinatario -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Destinatario *</label>
-                                <select name="recipient_id" class="form-select" id="recipient_select">
-                                    <option value="">-- Crear nuevo destinatario --</option>
-                                    <t t-foreach="recipients" t-as="rec">
-                                        <option t-att-value="rec.id">
-                                            <t t-out="rec.name"/>
-                                            <t t-if="rec.phone"> — <t t-out="rec.phone"/></t>
-                                        </option>
-                                    </t>
-                                </select>
-                            </div>
-
-                            <!-- Nuevo destinatario -->
-                            <div class="row border rounded p-3 mb-3 bg-light" id="new_recipient_section">
-                                <h6 class="text-muted">Datos del Nuevo Destinatario</h6>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Nombre del Destinatario</label>
-                                    <input type="text" name="new_recipient_name"
-                                           class="form-control"
-                                           t-att-value="post.get('new_recipient_name','')"
-                                           placeholder="Nombre completo"/>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label">Teléfono del Destinatario</label>
-                                    <input type="text" name="new_recipient_phone"
-                                           class="form-control"
-                                           t-att-value="post.get('new_recipient_phone','')"
-                                           placeholder="Ej: +504 9999-9999"/>
-                                </div>
-                            </div>
-
-                            <!-- Dirección de entrega -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Dirección de Entrega *</label>
-                                <input type="text" name="recipient_address"
-                                       class="form-control" required="1"
-                                       t-att-value="post.get('recipient_address','')"
-                                       placeholder="Colonia, calle, número de casa, referencia..."/>
-                            </div>
-
-                            <div class="row">
-                                <!-- Tipo de paquete -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Tipo de Paquete *</label>
-                                    <select name="package_type" class="form-select" required="1">
-                                        <option value="sobre">Sobre / Documentos</option>
-                                        <option value="caja_pequena">Caja Pequeña</option>
-                                        <option value="caja_mediana">Caja Mediana</option>
-                                        <option value="caja_grande">Caja Grande</option>
-                                        <option value="paquete">Paquete Irregular</option>
-                                        <option value="fragil">Paquete Frágil</option>
-                                        <option value="otro">Otro</option>
-                                    </select>
-                                </div>
-
-                                <!-- Peso -->
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold">Peso (kg) *</label>
-                                    <input type="number" name="weight" class="form-control"
-                                           id="weight_input" step="0.1" min="0.1"
-                                           required="1"
-                                           t-att-value="post.get('weight', '1.0')"
-                                           placeholder="1.0"/>
-                                </div>
-
-                                <!-- Precio estimado -->
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Precio Estimado</label>
-                                    <div class="form-control bg-light fw-bold text-success"
-                                         id="price_display">
-                                        Selecciona zona y peso
+                            <!-- ── REMITENTE: fijo, solo lectura en portal ── -->
+                            <div class="card bg-light mb-4">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <i class="fa fa-user-circle fa-2x text-primary"/>
+                                        <div>
+                                            <div class="text-muted small">📤 Remitente (su empresa)</div>
+                                            <div class="fw-bold fs-5">
+                                                <t t-out="partner.name"/>
+                                            </div>
+                                            <div class="text-muted small">
+                                                <t t-out="partner.phone or ''"/>
+                                                <t t-if="partner.street">
+                                                    — <t t-out="partner.street"/>
+                                                    <t t-if="partner.city">, <t t-out="partner.city"/></t>
+                                                </t>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Descripción -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Descripción del Contenido *</label>
-                                <textarea name="package_description" class="form-control"
-                                          rows="3" required="1"
-                                          placeholder="Describe el contenido del paquete..."><t t-out="post.get('package_description','')"/></textarea>
-                            </div>
+                            <!-- ── DESTINATARIO ── -->
+                            <div class="card mb-4">
+                                <div class="card-header fw-bold">📥 Destinatario</div>
+                                <div class="card-body">
 
-                            <div class="row">
-                                <!-- Valor declarado -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Valor Declarado (L.)</label>
-                                    <input type="number" name="declared_value"
-                                           class="form-control" step="0.01" min="0"
-                                           t-att-value="post.get('declared_value', '0')"
-                                           placeholder="0.00"/>
-                                </div>
-
-                                <!-- Frágil -->
-                                <div class="col-md-6 mb-3 d-flex align-items-end">
-                                    <div class="form-check">
-                                        <input type="checkbox" name="is_fragile"
-                                               class="form-check-input" id="is_fragile"
-                                               t-att-checked="post.get('is_fragile')"/>
-                                        <label class="form-check-label" for="is_fragile">
-                                            ⚠️ Paquete Frágil — Requiere cuidado especial
+                                    <!-- Selector de destinatario existente -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">
+                                            Seleccionar destinatario existente
                                         </label>
+                                        <select name="recipient_id" class="form-select"
+                                                id="recipient_select">
+                                            <option value="">— Crear nuevo destinatario —</option>
+                                            <t t-foreach="recipients" t-as="rec">
+                                                <option t-att-value="rec.id"
+                                                        t-att-data-address="rec.street or ''"
+                                                        t-att-data-city="rec.city or ''"
+                                                        t-att-data-phone="rec.phone or ''"
+                                                        t-att-selected="str(post.get('recipient_id','')) == str(rec.id)">
+                                                    <t t-out="rec.name"/>
+                                                    <t t-if="rec.city"> — <t t-out="rec.city"/></t>
+                                                    <t t-if="not rec.courier_owner_ids"> 🌐</t>
+                                                </option>
+                                            </t>
+                                        </select>
+                                        <div class="form-text text-muted">
+                                            🌐 = Destinatario público compartido
+                                        </div>
+                                    </div>
+
+                                    <!-- Datos del destinatario (se autocompletan o se ingresan nuevos) -->
+                                    <div id="recipient_detail_section">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <label class="form-label">
+                                                    Nombre del Destinatario *
+                                                </label>
+                                                <input type="text" name="new_recipient_name"
+                                                       id="new_recipient_name"
+                                                       class="form-control"
+                                                       t-att-value="post.get('new_recipient_name','')"
+                                                       placeholder="Nombre completo"/>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <label class="form-label">Teléfono</label>
+                                                <input type="text" name="new_recipient_phone"
+                                                       id="new_recipient_phone"
+                                                       class="form-control"
+                                                       t-att-value="post.get('new_recipient_phone','')"
+                                                       placeholder="+504 9999-9999"/>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label fw-bold">
+                                                Dirección de Entrega *
+                                            </label>
+                                            <input type="text" name="recipient_address"
+                                                   id="recipient_address"
+                                                   class="form-control" required="1"
+                                                   t-att-value="post.get('recipient_address','')"
+                                                   placeholder="Colonia, calle, número de casa, referencia..."/>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label fw-bold">
+                                                Ciudad / Municipio Destino *
+                                            </label>
+                                            <input type="text" name="recipient_city"
+                                                   id="recipient_city"
+                                                   class="form-control" required="1"
+                                                   t-att-value="post.get('recipient_city','')"
+                                                   placeholder="Ej: San Pedro Sula"/>
+                                        </div>
+                                        <!-- Opción: guardar como mi destinatario -->
+                                        <div class="form-check mt-1" id="save_recipient_check">
+                                            <input type="checkbox" name="save_recipient"
+                                                   class="form-check-input"
+                                                   id="save_recipient"
+                                                   t-att-checked="post.get('save_recipient')"/>
+                                            <label class="form-check-label" for="save_recipient">
+                                                Guardar este destinatario para futuros envíos
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Instrucciones especiales -->
-                            <div class="mb-4">
-                                <label class="form-label">Instrucciones Especiales</label>
-                                <textarea name="special_instructions" class="form-control" rows="2"
-                                          placeholder="Horario de entrega, referencias especiales, etc."><t t-out="post.get('special_instructions','')"/></textarea>
+                            <!-- ── ZONA Y PAQUETE ── -->
+                            <div class="card mb-4">
+                                <div class="card-header fw-bold">🗺️ Zona y Paquete</div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- Zona de entrega -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Zona de Entrega *</label>
+                                            <select name="route_id" class="form-select"
+                                                    id="route_select" required="1">
+                                                <option value="">— Seleccionar zona —</option>
+                                                <t t-foreach="routes" t-as="route">
+                                                    <option t-att-value="route.id"
+                                                            t-att-selected="str(post.get('route_id','')) == str(route.id)">
+                                                        <t t-out="route.name"/> —
+                                                        <t t-out="route.delivery_days"/> día(s)
+                                                    </option>
+                                                </t>
+                                            </select>
+                                        </div>
+
+                                        <!-- Tipo de paquete -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Tipo de Paquete *</label>
+                                            <select name="package_type" class="form-select" required="1">
+                                                <option value="sobre">Sobre / Documentos</option>
+                                                <option value="caja_pequena">Caja Pequeña</option>
+                                                <option value="caja_mediana">Caja Mediana</option>
+                                                <option value="caja_grande">Caja Grande</option>
+                                                <option value="paquete">Paquete Irregular</option>
+                                                <option value="fragil">Paquete Frágil</option>
+                                                <option value="otro">Otro</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Peso -->
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold">Peso (kg) *</label>
+                                            <input type="number" name="weight"
+                                                   class="form-control" id="weight_input"
+                                                   step="0.1" min="0.1" required="1"
+                                                   t-att-value="post.get('weight','1.0')"
+                                                   placeholder="1.0"/>
+                                        </div>
+
+                                        <!-- Precio estimado -->
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Precio Estimado</label>
+                                            <div class="form-control bg-light fw-bold text-success"
+                                                 id="price_display" style="min-height:38px;">
+                                                Selecciona zona y peso
+                                            </div>
+                                        </div>
+
+                                        <!-- Valor declarado -->
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Valor Declarado (L.)</label>
+                                            <input type="number" name="declared_value"
+                                                   class="form-control" step="0.01" min="0"
+                                                   t-att-value="post.get('declared_value','0')"
+                                                   placeholder="0.00"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- Descripción -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">
+                                            Descripción del Contenido *
+                                        </label>
+                                        <textarea name="package_description"
+                                                  class="form-control" rows="3" required="1"
+                                                  placeholder="Describe el contenido del paquete..."><t t-out="post.get('package_description','')"/></textarea>
+                                    </div>
+
+                                    <!-- Instrucciones + Frágil -->
+                                    <div class="row">
+                                        <div class="col-md-8 mb-2">
+                                            <label class="form-label">Instrucciones Especiales</label>
+                                            <input type="text" name="special_instructions"
+                                                   class="form-control"
+                                                   t-att-value="post.get('special_instructions','')"
+                                                   placeholder="Horario, referencias, etc."/>
+                                        </div>
+                                        <div class="col-md-4 mb-2 d-flex align-items-end">
+                                            <div class="form-check">
+                                                <input type="checkbox" name="is_fragile"
+                                                       class="form-check-input" id="is_fragile"
+                                                       t-att-checked="post.get('is_fragile')"/>
+                                                <label class="form-check-label" for="is_fragile">
+                                                    ⚠️ Paquete Frágil
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
+                            <!-- Botones -->
                             <div class="d-flex gap-3">
                                 <button type="submit" class="btn btn-primary btn-lg">
                                     <i class="fa fa-paper-plane me-2"/>Enviar Solicitud
@@ -410,58 +477,71 @@
                 </div>
             </div>
 
-            <!-- Script para calcular precio en tiempo real -->
+            <!-- ═══ Script: autocompletado de destinatario + precio estimado ═══ -->
             <script type="text/javascript">
-                document.addEventListener('DOMContentLoaded', function() {
-                    const routeSelect = document.getElementById('route_select');
-                    const weightInput = document.getElementById('weight_input');
-                    const priceDisplay = document.getElementById('price_display');
-                    const recipientSelect = document.getElementById('recipient_select');
-                    const newRecipientSection = document.getElementById('new_recipient_section');
+            document.addEventListener('DOMContentLoaded', function () {
 
-                    // Mostrar/ocultar sección de nuevo destinatario
-                    function toggleNewRecipient() {
-                        if (recipientSelect.value === '') {
-                            newRecipientSection.style.display = 'block';
-                        } else {
-                            newRecipientSection.style.display = 'none';
-                        }
+                const recipientSelect = document.getElementById('recipient_select');
+                const nameInput       = document.getElementById('new_recipient_name');
+                const phoneInput      = document.getElementById('new_recipient_phone');
+                const addressInput    = document.getElementById('recipient_address');
+                const cityInput       = document.getElementById('recipient_city');
+                const saveCheck       = document.getElementById('save_recipient_check');
+                const routeSelect     = document.getElementById('route_select');
+                const weightInput     = document.getElementById('weight_input');
+                const priceDisplay    = document.getElementById('price_display');
+
+                // ── Autocompletado al elegir destinatario existente ──
+                recipientSelect.addEventListener('change', function () {
+                    const selected = this.options[this.selectedIndex];
+                    if (this.value) {
+                        // Completar campos desde data-* del option
+                        nameInput.value    = selected.text.split(' — ')[0].replace(' 🌐','').trim();
+                        phoneInput.value   = selected.dataset.phone  || '';
+                        addressInput.value = selected.dataset.address || '';
+                        cityInput.value    = selected.dataset.city    || '';
+                        // Ocultar opción de guardar (ya existe)
+                        if (saveCheck) saveCheck.style.display = 'none';
+                    } else {
+                        // Limpiar para crear nuevo
+                        nameInput.value = phoneInput.value = addressInput.value = cityInput.value = '';
+                        if (saveCheck) saveCheck.style.display = 'block';
                     }
-                    recipientSelect.addEventListener('change', toggleNewRecipient);
-                    toggleNewRecipient();
-
-                    // Calcular precio estimado
-                    async function updatePrice() {
-                        const routeId = routeSelect.value;
-                        const weight = weightInput.value;
-                        if (!routeId || !weight) {
-                            priceDisplay.textContent = 'Selecciona zona y peso';
-                            return;
-                        }
-                        try {
-                            const response = await fetch('/courier/get_price', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                },
-                                body: JSON.stringify({
-                                    jsonrpc: '2.0', method: 'call', id: 1,
-                                    params: { route_id: routeId, weight: weight }
-                                })
-                            });
-                            const data = await response.json();
-                            if (data.result &amp;&amp; data.result.success) {
-                                priceDisplay.textContent = 'L. ' + data.result.price.toFixed(2);
-                            }
-                        } catch(e) {
-                            priceDisplay.textContent = 'Error al calcular';
-                        }
-                    }
-
-                    routeSelect.addEventListener('change', updatePrice);
-                    weightInput.addEventListener('input', updatePrice);
                 });
+
+                // ── Precio estimado en tiempo real ──
+                async function updatePrice() {
+                    const routeId = routeSelect.value;
+                    const weight  = weightInput.value;
+                    if (!routeId || !weight) {
+                        priceDisplay.textContent = 'Selecciona zona y peso';
+                        return;
+                    }
+                    try {
+                        const resp = await fetch('/courier/get_price', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0', method: 'call', id: 1,
+                                params: { route_id: routeId, weight: weight }
+                            })
+                        });
+                        const data = await resp.json();
+                        if (data.result &amp;&amp; data.result.success) {
+                            priceDisplay.textContent =
+                                'L. ' + parseFloat(data.result.price).toFixed(2) +
+                                ' (' + data.result.delivery_days + ' día(s))';
+                        } else {
+                            priceDisplay.textContent = 'No disponible';
+                        }
+                    } catch(e) {
+                        priceDisplay.textContent = 'Error al calcular';
+                    }
+                }
+
+                routeSelect.addEventListener('change', updatePrice);
+                weightInput.addEventListener('input',  updatePrice);
+            });
             </script>
         </t>
     </template>

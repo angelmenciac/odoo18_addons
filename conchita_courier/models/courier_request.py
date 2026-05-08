@@ -101,7 +101,7 @@ class CourierRequest(models.Model):
         string='Destinatario',
         required=True,
         tracking=True,
-        domain="[('courier_owner_id', '=', partner_id), '|', ('courier_owner_id', '=', False)]",
+        domain="[('is_courier_recipient', '=', True), '|', ('courier_owner_ids', 'in', [partner_id]), ('courier_owner_ids', '=', False)]",
         help='Selecciona un destinatario existente o crea uno nuevo',
     )
     recipient_name = fields.Char(
@@ -116,7 +116,6 @@ class CourierRequest(models.Model):
     )
     recipient_address = fields.Char(
         string='Dirección de Entrega',
-        required=True,
         tracking=True,
         help='Dirección exacta de entrega (colonia, calle, referencia)',
     )
@@ -276,8 +275,38 @@ class CourierRequest(models.Model):
         return stage.id if stage else False
 
     @api.model
-    def _read_group_stage_ids(self, stages, domain, order):
-        return self.env['courier.stage'].search([], order=order)
+    def _read_group_stage_ids(self, stages, domain):
+        return self.env['courier.stage'].search([], order='sequence, id')
+
+    # ── onchange: al seleccionar destinatario, autocompleta dirección y ciudad ──
+    @api.onchange('recipient_id')
+    def _onchange_recipient_id(self):
+        if self.recipient_id:
+            # Autocompletar dirección desde el contacto del destinatario
+            parts = filter(None, [
+                self.recipient_id.street,
+                self.recipient_id.street2,
+            ])
+            address = ', '.join(parts)
+            if address:
+                self.recipient_address = address
+            # Autocompletar ciudad
+            if self.recipient_id.city:
+                self.recipient_city = self.recipient_id.city
+            # Autocompletar zona si el destinatario tiene ciudad configurada
+            if self.recipient_id.zip and not self.route_id:
+                pass  # espacio para lógica futura de zona automática
+
+    # ── onchange: al cambiar cliente, limpiar destinatario si ya no aplica ──
+    @api.onchange('partner_id')
+    def _onchange_partner_id_recipient(self):
+        if self.recipient_id and self.partner_id:
+            owners = self.recipient_id.courier_owner_ids
+            # Si el destinatario tiene clientes asignados y el cliente actual no está
+            if owners and self.partner_id not in owners:
+                self.recipient_id = False
+                self.recipient_address = False
+                self.recipient_city = False
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -43,6 +43,7 @@
         'views/courier_price_rule_views.xml',
         'views/courier_driver_views.xml',
         'views/courier_request_views.xml',
+        'views/res_partner_views.xml',
         'views/portal_templates.xml',
         'views/menu_views.xml',
         # Reports
